@@ -7,28 +7,33 @@
 
 namespace Slic3r {
 
-bool SVG::open(const char* afilename)
+bool SVG::open(const char* afilename, HeaderFlags options)
 {
     this->filename = afilename;
     this->f = boost::nowide::fopen(afilename, "w");
+    this->flipY    = has_flag(options, FLIP_Y);
     if (this->f == NULL)
         return false;
     fprintf(this->f,
         "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
         "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.0//EN\" \"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd\">\n"
         "<svg height=\"2000\" width=\"2000\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n"
-        "   <marker id=\"endArrow\" markerHeight=\"8\" markerUnits=\"strokeWidth\" markerWidth=\"10\" orient=\"auto\" refX=\"1\" refY=\"5\" viewBox=\"0 0 10 10\">\n"
-        "      <polyline fill=\"darkblue\" points=\"0,0 10,5 0,10 1,5\" />\n"
-        "   </marker>\n"
         );
+
+    if(!has_flag(options, WITHOUT_MARKER))
+        fprintf(this->f,
+            "   <marker id=\"endArrow\" markerHeight=\"8\" markerUnits=\"strokeWidth\" markerWidth=\"10\" orient=\"auto\" refX=\"1\" refY=\"5\" viewBox=\"0 0 10 10\">\n"
+            "      <polyline fill=\"darkblue\" points=\"0,0 10,5 0,10 1,5\" />\n"
+            "   </marker>\n" );
+
     return true;
 }
 
-bool SVG::open(const char* afilename, const BoundingBox &bbox, const coord_t bbox_offset, bool aflipY)
+bool SVG::open(const char* afilename, const BoundingBox &bbox, const coord_t bbox_offset, HeaderFlags options)
 {
     this->filename = afilename;
     this->origin   = bbox.min - Point(bbox_offset, bbox_offset);
-    this->flipY    = aflipY;
+    this->flipY    = has_flag(options, FLIP_Y);
     this->f        = boost::nowide::fopen(afilename, "w");
     if (f == NULL)
         return false;
@@ -37,11 +42,15 @@ bool SVG::open(const char* afilename, const BoundingBox &bbox, const coord_t bbo
     fprintf(this->f,
         "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
         "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.0//EN\" \"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd\">\n"
-        "<svg height=\"%f\" width=\"%f\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n"
-        "   <marker id=\"endArrow\" markerHeight=\"8\" markerUnits=\"strokeWidth\" markerWidth=\"10\" orient=\"auto\" refX=\"1\" refY=\"5\" viewBox=\"0 0 10 10\">\n"
-        "      <polyline fill=\"darkblue\" points=\"0,0 10,5 0,10 1,5\" />\n"
-        "   </marker>\n",
+        "<svg height=\"%f\" width=\"%f\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n",
         h, w);
+
+    if(!has_flag(options, WITHOUT_MARKER))
+        fprintf(this->f,
+            "   <marker id=\"endArrow\" markerHeight=\"8\" markerUnits=\"strokeWidth\" markerWidth=\"10\" orient=\"auto\" refX=\"1\" refY=\"5\" viewBox=\"0 0 10 10\">\n"
+            "      <polyline fill=\"darkblue\" points=\"0,0 10,5 0,10 1,5\" />\n"
+            "   </marker>\n" );
+
     return true;
 }
 

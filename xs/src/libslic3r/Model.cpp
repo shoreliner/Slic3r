@@ -7,6 +7,10 @@
 #include "Format/STL.hpp"
 #include "Format/3mf.hpp"
 
+/* Temporary mod for SVG export */
+#include "Binpack2DBridge/ModelExtensions.hpp"
+/* **************************** */
+
 #include <float.h>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -296,30 +300,8 @@ static bool _arrange(const Pointfs &sizes, coordf_t dist, const BoundingBoxf* bb
     but altering their instance positions */
 bool Model::arrange_objects(coordf_t dist, const BoundingBoxf* bb)
 {
-    // get the (transformed) size of each instance so that we take
-    // into account their different transformations when packing
-    Pointfs instance_sizes;
-    Pointfs instance_centers;
-    for (const ModelObject *o : this->objects)
-        for (size_t i = 0; i < o->instances.size(); ++ i) {
-            // an accurate snug bounding box around the transformed mesh.
-            BoundingBoxf3 bbox(o->instance_bounding_box(i, true));
-            instance_sizes.push_back(bbox.size());
-            instance_centers.push_back(bbox.center());
-        }
+    bp2d::exportSVG(*this, dist, bb);
 
-    Pointfs positions;
-    if (! _arrange(instance_sizes, dist, bb, positions))
-        return false;
-    
-	size_t idx = 0;
-	for (ModelObject *o : this->objects) {
-        for (ModelInstance *i : o->instances) {
-            i->offset = positions[idx] - instance_centers[idx];
-            ++ idx;
-        }
-        o->invalidate_bounding_box();
-    }
     return true;
 }
 

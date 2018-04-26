@@ -660,6 +660,18 @@ add_custom_target(pot
     COMMENT "Generate pot file from strings in the source tree"
 )
 
+include(Binpack2D)
+add_subdirectory(${LIBDIR}/binpack2d)
+
+# The target with the slic3r geometry classes provided for binpack2d
+add_subdirectory(${LIBDIR}/libslic3r/Binpack2DBridge)
+
+# Add the binpack2d main sources and link them to libslic3r
+target_link_libraries(libslic3r binpack2d
+                                binpack2d_bridge
+                     )
+
+
 # Installation
 install(TARGETS XS DESTINATION ${PERL_VENDORARCH}/auto/Slic3r/XS)
 install(FILES lib/Slic3r/XS.pm DESTINATION ${PERL_VENDORLIB}/Slic3r)
