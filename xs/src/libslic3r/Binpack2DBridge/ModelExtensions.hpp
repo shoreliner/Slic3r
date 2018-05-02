@@ -19,11 +19,24 @@ SvgPtr svgFromModel(const Slic3r::Model& model,
 
 void exportSVG(Slic3r::Model& model,
                coordf_t dist,
-               const Slic3r::BoundingBoxf* bb);
-//void exportSVG(Arranger::PackGroup& result, const Arranger::BinType& bin);
+               const Slic3r::BoundingBoxf* bb,
+               const double downscale);
 
-
-std::vector<ClipperLib::PolyNode> modelSiluett(const Slic3r::Model &model);
+/**
+ * @brief Arrange model objects to best fit onto the print bed.
+ *
+ * Objects which don't fit onto the print bed will be placed outside near the
+ * print bed. All objects will be arranged so that they can be moved to the
+ * print bed as a group without modifying the relative positions.
+ *
+ * @param model The 3D print model with all the object instances.
+ * @param dist The allowed minimum object distance. No object can be closer to
+ * another object than this value.
+ * @param bb The print bed shape.
+ */
+void arrange(Slic3r::Model& model,
+             coordf_t dist,
+             const Slic3r::BoundingBoxf& bb);
 
 }
 

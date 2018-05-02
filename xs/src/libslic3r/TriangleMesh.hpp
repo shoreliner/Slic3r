@@ -55,9 +55,6 @@ public:
     ExPolygons horizontal_projection() const;
     Polygon convex_hull();
 
-    // Temporary function for testing binpack2d. It does not scale the polygons.
-    Polygon _convex_hull();
-
     BoundingBoxf3 bounding_box() const;
     void reset_repair_stats();
     bool needed_repair() const;

@@ -579,18 +579,6 @@ Polygon TriangleMesh::convex_hull()
     return Slic3r::Geometry::convex_hull(pp);
 }
 
-Polygon TriangleMesh::_convex_hull()
-{
-    this->require_shared_vertices();
-    Points pp;
-    pp.reserve(this->stl.stats.shared_vertices);
-    for (int i = 0; i < this->stl.stats.shared_vertices; ++ i) {
-        stl_vertex* v = &this->stl.v_shared[i];
-        pp.emplace_back(Point(v->x, v->y));
-    }
-    return Slic3r::Geometry::convex_hull(pp);
-}
-
 BoundingBoxf3
 TriangleMesh::bounding_box() const
 {

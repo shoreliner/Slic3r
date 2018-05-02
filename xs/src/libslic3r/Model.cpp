@@ -300,8 +300,9 @@ static bool _arrange(const Pointfs &sizes, coordf_t dist, const BoundingBoxf* bb
     but altering their instance positions */
 bool Model::arrange_objects(coordf_t dist, const BoundingBoxf* bb)
 {
-    bp2d::exportSVG(*this, dist, bb);
+    assert(bb != nullptr);
 
+    bp2d::arrange(*this, dist, *bb);
     return true;
 }
 

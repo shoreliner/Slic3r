@@ -6,7 +6,9 @@
 #include <wx/stdpaths.h>
 #include <wx/filedlg.h>
 #include <wx/app.h>
+
 #include <fstream>
+#include <numeric>
 
 #include <ClipperUtils.hpp>
 #include "slic3r/GUI/GUI.hpp"
@@ -44,8 +46,21 @@ SvgPtr svgFromModel(const Slic3r::Model &model, const std::string& file_path)
     return svg;
 }
 
-std::vector<ClipperLib::PolyNode> modelSiluett(const Slic3r::Model &model) {
-    std::vector<ClipperLib::PolyNode> ret;
+// A container which stores a pointer to the 3D object and its projected
+// 2D shape from top view.
+using ShapeData2D =
+    std::vector<std::pair<Slic3r::ModelInstance*, Item>>;
+
+ShapeData2D projectModelFromTop(const Slic3r::Model &model) {
+    ShapeData2D ret;
+
+    auto s = std::accumulate(model.objects.begin(), model.objects.end(), 0,
+                    [](size_t s, ModelObject* o){
+        return s + o->instances.size();
+    });
+
+    ret.reserve(s);
+
     for(auto objptr : model.objects) {
         if(objptr) {
 
@@ -56,12 +71,12 @@ std::vector<ClipperLib::PolyNode> modelSiluett(const Slic3r::Model &model) {
                     Slic3r::TriangleMesh tmpmesh = rmesh;
                     objinst->transform_mesh(&tmpmesh);
                     ClipperLib::PolyNode pn;
-                    auto p = tmpmesh._convex_hull();
+                    auto p = tmpmesh.convex_hull();
                     p.make_clockwise();
                     p.append(p.first_point());
                     pn.Contour = Slic3rMultiPoint_to_ClipperPath( p );
 
-                    ret.push_back(pn);
+                    ret.emplace_back(objinst, Item(std::move(pn)));
                 }
             }
         }
@@ -72,7 +87,7 @@ std::vector<ClipperLib::PolyNode> modelSiluett(const Slic3r::Model &model) {
 
 void exportSVG(Slic3r::Model& model,
                coordf_t dist,
-               const Slic3r::BoundingBoxf* bb)
+               const Slic3r::BoundingBoxf* bb, const double downscale)
 {
     wxFileDialog saveFileDialog(GUI::get_app()->GetTopWindow(),
                                 _("Save svg file for svgnest"), "", "",
@@ -91,12 +106,20 @@ void exportSVG(Slic3r::Model& model,
                 static_cast<binpack2d::Coord>(bb->max.y)
             });
 
-    auto shapes = bp2d::modelSiluett(model);
+    auto shapemap = bp2d::projectModelFromTop(model);
 
-    Arranger::PlacementConfig config;
+    std::vector<std::reference_wrapper<Item>> shapes;
+    shapes.reserve(shapemap.size());
+
+    std::for_each(shapemap.begin(), shapemap.end(),
+                  [&shapes](ShapeData2D::value_type& it){
+       shapes.push_back(std::ref(it.second));
+    });
+
+    DJDArranger::PlacementConfig config;
         config.min_obj_distance = static_cast<Coord>(dist);
 
-    Arranger arrange(bin, config);
+    DJDArranger arrange{bin, config};
 
     auto result = arrange(shapes.begin(), shapes.end());
 
@@ -115,15 +138,25 @@ void exportSVG(Slic3r::Model& model,
 
             out << svg_header;
 
-            binpack2d::Rectangle rbin(bin.width(), bin.height());
+            Item rbin( bp2d::Rectangle(bin.width(), bin.height()) );
 
-            for(auto&v : rbin) setY(v, -getY(v) + 500 );
+            for(unsigned j = 0; j < rbin.vertexCount(); j++) {
+                auto v = rbin.vertex(j);
+                setY(v, -getY(v)/downscale + 500 );
+                setX(v, getX(v)/downscale);
+                rbin.setVertex(j, v);
+            }
 
             out << ShapeLike::serialize<Formats::SVG>(rbin.rawShape()) << std::endl;
 
             for(auto& sh : r) {
-                Item tsh = sh.get().transformedShape();
-                for(auto&v : tsh) setY(v, -getY(v) + 500 );
+                Item tsh(sh.get().transformedShape());
+                for(unsigned j = 0; j < tsh.vertexCount(); j++) {
+                    auto v = tsh.vertex(j);
+                    setY(v, -getY(v)/downscale + 500);
+                    setX(v, getX(v)/downscale);
+                    tsh.setVertex(j, v);
+                }
                 out << ShapeLike::serialize<Formats::SVG>(tsh.rawShape()) << std::endl;
             }
 
@@ -132,6 +165,80 @@ void exportSVG(Slic3r::Model& model,
         out.close();
 
         i++;
+    }
+}
+
+void arrange(Model &model, coordf_t dist, const Slic3r::BoundingBoxf& bb)
+{
+    // Scale up the bounding box to clipper scale.
+    BoundingBoxf bbb = bb;
+    bbb.scale(1.0/SCALING_FACTOR);
+
+    Box bin({
+                static_cast<binpack2d::Coord>(bbb.min.x),
+                static_cast<binpack2d::Coord>(bbb.min.y)
+            },
+            {
+                static_cast<binpack2d::Coord>(bbb.max.x),
+                static_cast<binpack2d::Coord>(bbb.max.y)
+            });
+
+    // Get the 2D projected shapes with their 3D model instance pointers
+    auto shapemap = bp2d::projectModelFromTop(model);
+
+    // Copy the references for the shapes only as the arranger expects a
+    // sequence of objects convertible to Item or ClipperPolygon
+    std::vector<std::reference_wrapper<Item>> shapes;
+    shapes.reserve(shapemap.size());
+    std::for_each(shapemap.begin(), shapemap.end(),
+                  [&shapes](ShapeData2D::value_type& it){
+       shapes.push_back(std::ref(it.second));
+    });
+
+    // Will use the DJD selection heuristic with the BottomLeft placement
+    // strategy
+    using Arranger = _Arranger<BottomLeftPlacer, DJDHeuristic>;
+
+    // Create the arranger config
+    Arranger::PlacementConfig config;
+        config.min_obj_distance = static_cast<Coord>(dist);
+
+    Arranger arranger{bin, config};
+
+    // Arrange and return the items with their respective indices within the
+    // input sequence.
+    Arranger::IndexedPackGroup result =
+            arranger.arrangeIndexed(shapes.begin(), shapes.end());
+
+    auto batch_offset = 0;
+    for(auto& group : result) {
+        for(auto& r : group) {
+            auto idx = r.first;     // get the original item index
+            Item& item = r.second;  // get the item itself
+
+            // Get the model instance from the initial shapemap using the index
+            ModelInstance *inst_ptr = shapemap[idx].first;
+
+            // Get the tranformation data from the item object and scale it
+            // appropriately
+            Radians rot = item.rotation();
+            auto off = item.translation();
+            Pointf foff(off.X*SCALING_FACTOR + batch_offset,
+                        off.Y*SCALING_FACTOR);
+
+            // write the tranformation data into the model instance
+            inst_ptr->rotation += rot;
+            inst_ptr->offset += foff;
+
+            // Debug
+            /*std::cout << "item " << idx << ": \n" << "\toffset_x: " << foff.x
+                      << "\n\toffset_y: " << foff.y << std::endl;*/
+        }
+
+        // Only the first pack group can be placed onto the print bed. The
+        // other objects which could not fit will be placed next to the print
+        // bed
+        batch_offset += bin.width()*1.1*SCALING_FACTOR;
     }
 }
 
