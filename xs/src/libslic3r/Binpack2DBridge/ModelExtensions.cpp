@@ -116,10 +116,7 @@ void exportSVG(Slic3r::Model& model,
        shapes.push_back(std::ref(it.second));
     });
 
-    DJDArranger::PlacementConfig config;
-        config.min_obj_distance = static_cast<Coord>(dist);
-
-    DJDArranger arrange{bin, config};
+    DJDArranger arrange(bin, static_cast<Coord>(dist)/downscale);
 
     auto result = arrange(shapes.begin(), shapes.end());
 
@@ -168,55 +165,85 @@ void exportSVG(Slic3r::Model& model,
     }
 }
 
-void arrange(Model &model, coordf_t dist, const Slic3r::BoundingBoxf& bb)
-{
-    // Scale up the bounding box to clipper scale.
-    BoundingBoxf bbb = bb;
-    bbb.scale(1.0/SCALING_FACTOR);
 
-    Box bin({
-                static_cast<binpack2d::Coord>(bbb.min.x),
-                static_cast<binpack2d::Coord>(bbb.min.y)
-            },
-            {
-                static_cast<binpack2d::Coord>(bbb.max.x),
-                static_cast<binpack2d::Coord>(bbb.max.y)
-            });
+bool arrange(Model &model, coordf_t dist, const Slic3r::BoundingBoxf* bb,
+             bool first_bin_only)
+{
+    using ArrangeResult = _IndexedPackGroup<PolygonImpl>;
+
+    bool ret = true;
+
+    // Create the arranger config
+    auto min_obj_distance = static_cast<Coord>(dist/SCALING_FACTOR);
 
     // Get the 2D projected shapes with their 3D model instance pointers
     auto shapemap = bp2d::projectModelFromTop(model);
+
+    double area = 0;
+    double area_max = 0;
+    Item *biggest = nullptr;
 
     // Copy the references for the shapes only as the arranger expects a
     // sequence of objects convertible to Item or ClipperPolygon
     std::vector<std::reference_wrapper<Item>> shapes;
     shapes.reserve(shapemap.size());
     std::for_each(shapemap.begin(), shapemap.end(),
-                  [&shapes](ShapeData2D::value_type& it){
-       shapes.push_back(std::ref(it.second));
+                  [&shapes, &area, min_obj_distance, &area_max, &biggest]
+                  (ShapeData2D::value_type& it)
+    {
+        Item& item = it.second;
+        item.addOffset(min_obj_distance);
+        auto b = ShapeLike::boundingBox(item.transformedShape());
+        auto a = b.width()*b.height();
+        if(area_max < a) {
+            area_max = a;
+            biggest = &item;
+        }
+        area += b.width()*b.height();
+        shapes.push_back(std::ref(it.second));
     });
+
+    Box bin;
+
+    if(bb != nullptr && bb->defined) {
+        // Scale up the bounding box to clipper scale.
+        BoundingBoxf bbb = *bb;
+        bbb.scale(1.0/SCALING_FACTOR);
+
+        bin = Box({
+                    static_cast<binpack2d::Coord>(bbb.min.x),
+                    static_cast<binpack2d::Coord>(bbb.min.y)
+                },
+                {
+                    static_cast<binpack2d::Coord>(bbb.max.x),
+                    static_cast<binpack2d::Coord>(bbb.max.y)
+                });
+    } else {
+        // Just take the biggest item as bin... ?
+        bin = ShapeLike::boundingBox(biggest->transformedShape());
+    }
 
     // Will use the DJD selection heuristic with the BottomLeft placement
     // strategy
     using Arranger = _Arranger<BottomLeftPlacer, DJDHeuristic>;
 
-    // Create the arranger config
-    Arranger::PlacementConfig config;
-        config.min_obj_distance = static_cast<Coord>(dist);
 
-    Arranger arranger{bin, config};
+    Arranger arranger(bin, min_obj_distance);
 
     // Arrange and return the items with their respective indices within the
     // input sequence.
     Arranger::IndexedPackGroup result =
             arranger.arrangeIndexed(shapes.begin(), shapes.end());
 
-    auto batch_offset = 0;
-    for(auto& group : result) {
+
+    auto applyResult = [&shapemap](ArrangeResult::value_type& group,
+            Coord batch_offset)
+    {
         for(auto& r : group) {
             auto idx = r.first;     // get the original item index
             Item& item = r.second;  // get the item itself
 
-            // Get the model instance from the initial shapemap using the index
+            // Get the model instance from the shapemap using the index
             ModelInstance *inst_ptr = shapemap[idx].first;
 
             // Get the tranformation data from the item object and scale it
@@ -231,15 +258,28 @@ void arrange(Model &model, coordf_t dist, const Slic3r::BoundingBoxf& bb)
             inst_ptr->offset += foff;
 
             // Debug
-            /*std::cout << "item " << idx << ": \n" << "\toffset_x: " << foff.x
-                      << "\n\toffset_y: " << foff.y << std::endl;*/
+            /*std::cout << "item " << idx << ": \n" << "\toffset_x: "
+             * << foff.x << "\n\toffset_y: " << foff.y << std::endl;*/
         }
+    };
 
-        // Only the first pack group can be placed onto the print bed. The
-        // other objects which could not fit will be placed next to the print
-        // bed
-        batch_offset += bin.width()*1.1*SCALING_FACTOR;
+    if(first_bin_only) {
+        applyResult(result.front(), 0);
+    } else {
+        auto batch_offset = 0;
+        for(auto& group : result) {
+            applyResult(group, batch_offset);
+
+            // Only the first pack group can be placed onto the print bed. The
+            // other objects which could not fit will be placed next to the
+            // print bed
+            batch_offset += 2*bin.width()*SCALING_FACTOR;
+        }
     }
+
+    for(auto objptr : model.objects) objptr->invalidate_bounding_box();
+
+    return ret && result.size() == 1;
 }
 
 }

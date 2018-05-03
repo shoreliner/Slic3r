@@ -34,9 +34,10 @@ void exportSVG(Slic3r::Model& model,
  * another object than this value.
  * @param bb The print bed shape.
  */
-void arrange(Slic3r::Model& model,
+bool arrange(Slic3r::Model& model,
              coordf_t dist,
-             const Slic3r::BoundingBoxf& bb);
+             const Slic3r::BoundingBoxf *bb,
+             bool first_bin_only = false);
 
 }
 
