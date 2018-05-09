@@ -21,9 +21,11 @@ using namespace binpack2d;
 
 SvgPtr svgFromModel(const Slic3r::Model &model, const std::string& file_path)
 {
-    std::string svgdir = file_path.empty() ? wxStandardPaths::Get().GetTempDir() : file_path ;
+    std::string svgdir = file_path.empty() ? wxStandardPaths::Get().GetTempDir()
+                                           : file_path ;
 
-    SvgPtr svg = std::make_unique<SvgDoc>(svgdir.c_str(), SvgDoc::WITHOUT_MARKER);
+    std::unique_ptr<SvgDoc> svg( new SvgDoc(svgdir.c_str(),
+                                            SvgDoc::WITHOUT_MARKER));
 
     for(auto objptr : model.objects) {
         if(objptr) {
@@ -116,7 +118,8 @@ void exportSVG(Slic3r::Model& model,
        shapes.push_back(std::ref(it.second));
     });
 
-    DJDArranger arrange(bin, static_cast<Coord>(dist)/downscale);
+    Arranger<BottomLeftPlacer, DJDHeuristic>
+            arrange(bin, static_cast<Coord>(dist)/downscale);
 
     auto result = arrange(shapes.begin(), shapes.end());
 
@@ -225,8 +228,7 @@ bool arrange(Model &model, coordf_t dist, const Slic3r::BoundingBoxf* bb,
 
     // Will use the DJD selection heuristic with the BottomLeft placement
     // strategy
-    using Arranger = _Arranger<BottomLeftPlacer, DJDHeuristic>;
-
+    using Arranger = Arranger<BottomLeftPlacer, DJDHeuristic>;
 
     Arranger arranger(bin, min_obj_distance);
 
