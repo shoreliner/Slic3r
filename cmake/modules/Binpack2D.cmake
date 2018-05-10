@@ -7,6 +7,6 @@
 include(DownloadProject)
 download_project(   PROJ                binpack2d
                     GIT_REPOSITORY      https://github.com/tamasmeszaros/binpack2d.git
-                    GIT_TAG             833baf5f4e05a55ed9eb5b2ce39b597d8ed5d929
+                    GIT_TAG             88d74b460ff87c6d5dcefe739c94b0444f458259
                     SOURCE_DIR          ${CMAKE_SOURCE_DIR}/xs/src/binpack2d
 )
