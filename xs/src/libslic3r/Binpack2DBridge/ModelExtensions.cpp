@@ -21,7 +21,8 @@ using namespace binpack2d;
 
 SvgPtr svgFromModel(const Slic3r::Model &model, const std::string& file_path)
 {
-    std::string svgdir = file_path.empty() ? wxStandardPaths::Get().GetTempDir()
+    std::string svgdir = file_path.empty() ?
+                wxStandardPaths::Get().GetTempDir().ToStdString()
                                            : file_path ;
 
     std::unique_ptr<SvgDoc> svg( new SvgDoc(svgdir.c_str(),
