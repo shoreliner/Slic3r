@@ -18,35 +18,26 @@ public:
     Point origin;
     bool flipY;
 
-    enum HeaderFlags {
-        DEFAULT = 0x0,
-        WITHOUT_MARKER = 0x2,
-        FLIP_Y = 0x4
-    };
-
-    // Please compare to only one flag or implement a more sophisticated version
-    inline bool has_flag(HeaderFlags var, HeaderFlags flags) { return (var & flags) > 0; }
-
-    SVG(const char* afilename, HeaderFlags options = DEFAULT) :
-        arrows(false), fill("grey"), stroke("black"), filename(afilename), flipY(has_flag(options, FLIP_Y))
-        { open(afilename, options); }
-    SVG(const char* afilename, const BoundingBox &bbox, const coord_t bbox_offset = scale_(1.), HeaderFlags options = DEFAULT) :
-        arrows(false), fill("grey"), stroke("black"), filename(afilename), origin(bbox.min - Point(bbox_offset, bbox_offset)), flipY(has_flag(options, FLIP_Y))
-        { open(filename, bbox, bbox_offset, options); }
+    SVG(const char* afilename) :
+        arrows(false), fill("grey"), stroke("black"), filename(afilename), flipY(false)
+        { open(filename); }
+    SVG(const char* afilename, const BoundingBox &bbox, const coord_t bbox_offset = scale_(1.), bool aflipY = false) : 
+        arrows(false), fill("grey"), stroke("black"), filename(afilename), origin(bbox.min - Point(bbox_offset, bbox_offset)), flipY(aflipY)
+        { open(filename, bbox, bbox_offset, aflipY); }
     SVG(const std::string &filename) :
         arrows(false), fill("grey"), stroke("black"), filename(filename), flipY(false)
         { open(filename); }
-    SVG(const std::string &filename, const BoundingBox &bbox, const coord_t bbox_offset = scale_(1.), HeaderFlags options = DEFAULT) :
-        arrows(false), fill("grey"), stroke("black"), filename(filename), origin(bbox.min - Point(bbox_offset, bbox_offset)), flipY(has_flag(options, FLIP_Y))
-        { open(filename, bbox, bbox_offset, options); }
+    SVG(const std::string &filename, const BoundingBox &bbox, const coord_t bbox_offset = scale_(1.), bool aflipY = false) : 
+        arrows(false), fill("grey"), stroke("black"), filename(filename), origin(bbox.min - Point(bbox_offset, bbox_offset)), flipY(aflipY)
+        { open(filename, bbox, bbox_offset, aflipY); }
     ~SVG() { if (f != NULL) Close(); }
 
-    bool open(const char* filename, HeaderFlags options = DEFAULT);
-    bool open(const char* filename, const BoundingBox &bbox, const coord_t bbox_offset = scale_(1.), HeaderFlags options = DEFAULT);
+    bool open(const char* filename);
+    bool open(const char* filename, const BoundingBox &bbox, const coord_t bbox_offset = scale_(1.), bool flipY = false);
     bool open(const std::string &filename) 
         { return open(filename.c_str()); }
-    bool open(const std::string &filename, const BoundingBox &bbox, const coord_t bbox_offset = scale_(1.), HeaderFlags options = DEFAULT)
-        { return open(filename.c_str(), bbox, bbox_offset, options); }
+    bool open(const std::string &filename, const BoundingBox &bbox, const coord_t bbox_offset = scale_(1.), bool flipY = false)
+        { return open(filename.c_str(), bbox, bbox_offset, flipY); }
 
     void draw(const Line &line, std::string stroke = "black", coordf_t stroke_width = 0);
     void draw(const ThickLine &line, const std::string &fill, const std::string &stroke, coordf_t stroke_width = 0);

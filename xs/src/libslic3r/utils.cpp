@@ -15,6 +15,8 @@
 #include <boost/nowide/integration/filesystem.hpp>
 #include <boost/nowide/convert.hpp>
 
+#include <Utils.hpp>
+
 namespace Slic3r {
 
 static boost::log::trivial::severity_level logSeverity = boost::log::trivial::error;
@@ -166,6 +168,11 @@ void confess_at(const char *file, int line, const char *func, const char *format
 }
 
 #else
+
+#ifndef SLIC3RXS
+struct SV {};
+#define pTHX_
+#endif
 
 #include <xsinit.h>
 

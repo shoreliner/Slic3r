@@ -2,6 +2,7 @@
 #define slic3r_Utils_hpp_
 
 #include <locale>
+#include <libslic3r.h>
 
 namespace Slic3r {
 

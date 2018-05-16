@@ -11,4 +11,4 @@ xs/MANIFEST.bak
 xs/assertlib*
 .init_bundle.ini
 local-lib
-xs/src/binpack2d
+xs/src/libnest2d

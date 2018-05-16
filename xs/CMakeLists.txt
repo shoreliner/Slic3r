@@ -660,17 +660,35 @@ add_custom_target(pot
     COMMENT "Generate pot file from strings in the source tree"
 )
 
-include(Binpack2D)
-add_subdirectory(${LIBDIR}/binpack2d)
+# ##############################################################################
+# Adding libnest2d project for bin packing...
+# ##############################################################################
 
-# The target with the slic3r geometry classes provided for binpack2d
-add_subdirectory(${LIBDIR}/libslic3r/Binpack2DBridge)
+set(LIBNEST2D_UNITTESTS ON CACHE BOOL "Force generating unittests for libnest2d")
+
+if(LIBNEST2D_UNITTESTS)
+   # If we want the libnest2d unit tests we need to build and executable with
+   # all the libslic3r dependencies. This is needed because the clipper library
+   # in the slic3r project is hacked so that it depends on the slic3r sources.
+   # Unfortunately, this implies that the test executable is also dependent on 
+   # the libslic3r target.
+
+   add_library(libslic3r_standalone STATIC ${LIBDIR}/libslic3r/utils.cpp)
+   set(LIBNEST2D_TEST_LIBRARIES
+       libslic3r libslic3r_standalone nowide libslic3r_gui admesh miniz
+       ${Boost_LIBRARIES} clipper ${EXPAT_LIBRARIES} ${GLEW_LIBRARIES}
+       polypartition poly2tri ${TBB_LIBRARIES} ${wxWidgets_LIBRARIES}
+       ${CURL_LIBRARIES}
+   )
+endif()
+
+include(Libnest2D)
+add_subdirectory(${LIBDIR}/libnest2d)
+target_include_directories(libslic3r PUBLIC BEFORE ${LIBNEST2D_INCLUDES})
 
 # Add the binpack2d main sources and link them to libslic3r
-target_link_libraries(libslic3r binpack2d
-                                binpack2d_bridge
-                     )
-
+target_link_libraries(libslic3r libnest2d)
+# ##############################################################################
 
 # Installation
 install(TARGETS XS DESTINATION ${PERL_VENDORARCH}/auto/Slic3r/XS)
