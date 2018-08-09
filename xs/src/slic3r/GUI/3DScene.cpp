@@ -645,7 +645,7 @@ std::vector<int> GLVolumeCollection::load_object(
 }
 
 
-int GLVolumeCollection::load_wipe_tower_preview(
+int GLVolumeCollection::load_wipe_tower_preview(ModelObject* mo,
     int obj_idx, float pos_x, float pos_y, float width, float depth, float height, float rotation_angle, bool use_VBOs, bool size_unknown, float brim_width)
 {
     if (depth < 0.01f)
@@ -659,7 +659,9 @@ int GLVolumeCollection::load_wipe_tower_preview(
     // In case we don't know precise dimensions of the wipe tower yet, we'll draw the box with different color with one side jagged:
     if (size_unknown) {
         color[0] = 0.9f;
-        color[1] = 0.6f;
+        color[1] = 0.9f;
+        color[2] = 0.9f;
+        color[3] = 0.75f;
 
         depth = std::max(depth, 10.f); // Too narrow tower would interfere with the teeth. The estimate is not precise anyway.
         float min_width = 30.f;
@@ -700,6 +702,11 @@ int GLVolumeCollection::load_wipe_tower_preview(
 
     this->volumes.emplace_back(new GLVolume(color));
     GLVolume &v = *this->volumes.back();
+
+    // Temporary hack for debugging the convex hull calculation - switch the mesh for the convex hull of the model
+    if (mo)
+        mesh = mo->mesh().convex_hull3d();
+
 
     if (use_VBOs)
         v.indexed_vertex_array.load_mesh_full_shading(mesh);

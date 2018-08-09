@@ -2346,7 +2346,7 @@ void GLCanvas3D::reload_scene(bool force)
             if (!m_print->state.is_done(psWipeTower))
                 depth = (900.f/w) * (float)(extruders_count - 1) ;
 
-            m_volumes.load_wipe_tower_preview(1000, x, y, w, depth, (float)height, a, m_use_VBOs && m_initialized, !m_print->state.is_done(psWipeTower),
+            m_volumes.load_wipe_tower_preview(m_print->objects.front()->model_object(), 1000, x, y, w, depth, (float)height, a, m_use_VBOs && m_initialized, !m_print->state.is_done(psWipeTower),
                                               m_print->config.nozzle_diameter.values[0] * 1.25f * 4.5f);
         }
     }
@@ -4770,7 +4770,7 @@ void GLCanvas3D::_load_shells()
         float depth = m_print->get_wipe_tower_depth();
         if (!m_print->state.is_done(psWipeTower))
             depth = (900.f/config.wipe_tower_width) * (float)(extruders_count - 1) ;
-        m_volumes.load_wipe_tower_preview(1000, config.wipe_tower_x, config.wipe_tower_y, config.wipe_tower_width, depth, max_z, config.wipe_tower_rotation_angle,
+        m_volumes.load_wipe_tower_preview(m_print->objects.front()->model_object(), 1000, config.wipe_tower_x, config.wipe_tower_y, config.wipe_tower_width, depth, max_z, config.wipe_tower_rotation_angle,
                                           m_use_VBOs && m_initialized, !m_print->state.is_done(psWipeTower), m_print->config.nozzle_diameter.values[0] * 1.25f * 4.5f);
     }
 }
