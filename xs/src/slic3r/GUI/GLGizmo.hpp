@@ -149,6 +149,35 @@ protected:
     virtual void on_render_for_picking(const BoundingBoxf3& box) const;
 };
 
+
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+
+class GLGizmoFlatten : public GLGizmoBase
+{
+    static const float Offset;
+
+    float m_flat_planes;
+
+    Pointf m_starting_drag_position;
+
+public:
+    GLGizmoFlatten();
+
+    void set_flat_vertices(std::vector<Pointf3s> vertices_list) {
+        // Save a copy of the vertices_list in a member variable and do something with it
+    }
+
+protected:
+    virtual bool on_init();
+    virtual void on_start_dragging();
+    virtual void on_update(const Pointf& mouse_pos);
+    virtual void on_render(const BoundingBoxf3& box) const;
+    virtual void on_render_for_picking(const BoundingBoxf3& box) const;
+};
+
+
+
 } // namespace GUI
 } // namespace Slic3r
 

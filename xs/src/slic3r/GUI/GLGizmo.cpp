@@ -502,5 +502,113 @@ void GLGizmoScale::on_render_for_picking(const BoundingBoxf3& box) const
     render_grabbers();
 }
 
+
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+const float GLGizmoFlatten::Offset = 5.0f;
+
+GLGizmoFlatten::GLGizmoFlatten()
+    : GLGizmoBase()
+{}
+
+
+bool GLGizmoFlatten::on_init()
+{
+    std::string path = resources_dir() + "/icons/overlay/";
+
+    std::string filename = path + "scale_off.png";
+    if (!m_textures[Off].load_from_file(filename, false))
+        return false;
+
+    filename = path + "scale_hover.png";
+    if (!m_textures[Hover].load_from_file(filename, false))
+        return false;
+
+    filename = path + "scale_on.png";
+    if (!m_textures[On].load_from_file(filename, false))
+        return false;
+
+    for (unsigned int i = 0; i < 4; ++i)
+    {
+        m_grabbers.push_back(Grabber());
+    }
+
+    return true;
+}
+
+void GLGizmoFlatten::on_start_dragging()
+{
+    if (m_hover_id != -1)
+        m_starting_drag_position = m_grabbers[m_hover_id].center;
+}
+
+void GLGizmoFlatten::on_update(const Pointf& mouse_pos)
+{
+    /*Pointf center(0.5 * (m_grabbers[1].center.x + m_grabbers[0].center.x), 0.5 * (m_grabbers[3].center.y + m_grabbers[0].center.y));
+
+    coordf_t orig_len = length(m_starting_drag_position - center);
+    coordf_t new_len = length(mouse_pos - center);
+    coordf_t ratio = (orig_len != 0.0) ? new_len / orig_len : 1.0;
+
+    m_scale = m_starting_scale * (float)ratio;*/
+}
+
+void GLGizmoFlatten::on_render(const BoundingBoxf3& box) const
+{
+    ::glDisable(GL_DEPTH_TEST);
+
+    coordf_t min_x = box.min.x - (coordf_t)Offset;
+    coordf_t max_x = box.max.x + (coordf_t)Offset;
+    coordf_t min_y = box.min.y - (coordf_t)Offset;
+    coordf_t max_y = box.max.y + (coordf_t)Offset;
+
+    m_grabbers[0].center.x = min_x;
+    m_grabbers[0].center.y = min_y;
+    m_grabbers[1].center.x = max_x;
+    m_grabbers[1].center.y = min_y;
+    m_grabbers[2].center.x = max_x;
+    m_grabbers[2].center.y = max_y;
+    m_grabbers[3].center.x = min_x;
+    m_grabbers[3].center.y = max_y;
+
+    ::glLineWidth(2.0f);
+    ::glColor3fv(BaseColor);
+    // draw outline
+    ::glBegin(GL_LINE_LOOP);
+    for (unsigned int i = 0; i < 4; ++i)
+    {
+        ::glVertex3f((GLfloat)m_grabbers[i].center.x, (GLfloat)m_grabbers[i].center.y, 0.0f);
+    }
+    ::glEnd();
+
+    // draw grabbers
+    for (unsigned int i = 0; i < 4; ++i)
+    {
+        ::memcpy((void*)m_grabbers[i].color, (const void*)HighlightColor, 3 * sizeof(float));
+    }
+    render_grabbers();
+}
+
+void GLGizmoFlatten::on_render_for_picking(const BoundingBoxf3& box) const
+{
+    static const GLfloat INV_255 = 1.0f / 255.0f;
+
+    ::glDisable(GL_DEPTH_TEST);
+
+    for (unsigned int i = 0; i < 4; ++i)
+    {
+        m_grabbers[i].color[0] = 1.0f;
+        m_grabbers[i].color[1] = 1.0f;
+        m_grabbers[i].color[2] = (254.0f - (float)i) * INV_255;
+    }
+    render_grabbers();
+}
+
+
+
+
 } // namespace GUI
 } // namespace Slic3r

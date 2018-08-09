@@ -1154,6 +1154,18 @@ bool GLCanvas3D::Gizmos::init()
 
     m_gizmos.insert(GizmosMap::value_type(Rotate, gizmo));
 
+    gizmo = new GLGizmoFlatten;
+    if (gizmo == nullptr)
+        return false;
+
+    if (!gizmo->init()) {
+        _reset();
+        return false;
+    }
+
+    m_gizmos.insert(GizmosMap::value_type(Flatten, gizmo));
+
+
     return true;
 }
 
@@ -1385,6 +1397,16 @@ void GLCanvas3D::Gizmos::set_angle_z(float angle_z)
     GizmosMap::const_iterator it = m_gizmos.find(Rotate);
     if (it != m_gizmos.end())
         reinterpret_cast<GLGizmoRotate*>(it->second)->set_angle_z(angle_z);
+}
+
+void GLCanvas3D::Gizmos::set_flat_vertices(std::vector<Pointf3s> vertices_list)
+{
+    if (!m_enabled)
+        return;
+
+    GizmosMap::const_iterator it = m_gizmos.find(Flatten);
+    if (it != m_gizmos.end())
+        reinterpret_cast<GLGizmoFlatten*>(it->second)->set_flat_vertices(vertices_list);
 }
 
 void GLCanvas3D::Gizmos::render(const GLCanvas3D& canvas, const BoundingBoxf3& box) const
@@ -2170,6 +2192,7 @@ void GLCanvas3D::update_gizmos_data()
             {
                 m_gizmos.set_scale(model_instance->scaling_factor);
                 m_gizmos.set_angle_z(model_instance->rotation);
+                //m_gizmos.set_flat_vertices(model_object->convex_hull().get_flat_vertices());
             }
         }
     }
@@ -2177,6 +2200,7 @@ void GLCanvas3D::update_gizmos_data()
     {
         m_gizmos.set_scale(1.0f);
         m_gizmos.set_angle_z(0.0f);
+        m_gizmos.set_flat_vertices(std::vector<Pointf3s>());
     }
 }
 
