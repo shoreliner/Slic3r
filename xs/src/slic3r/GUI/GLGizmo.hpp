@@ -150,23 +150,26 @@ protected:
 };
 
 
-//////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////
-
 class GLGizmoFlatten : public GLGizmoBase
 {
-    static const float Offset;
+// This gizmo does not use grabbers. The m_hover_id relates to polygon managed by the class itself.
 
-    float m_flat_planes;
+private:
+    mutable Pointf3 m_normal;
 
-    Pointf m_starting_drag_position;
+    struct PlaneData {
+        std::vector<Pointf3> vertices;
+        Pointf3 normal;
+        float color[3];
+    };
+
+    std::vector<PlaneData> m_planes;
 
 public:
     GLGizmoFlatten();
 
-    void set_flat_vertices(std::vector<Pointf3s> vertices_list) {
-        // Save a copy of the vertices_list in a member variable and do something with it
-    }
+    void set_flattening_data(std::vector<Pointf3s> vertices_list);
+    Pointf3 get_flattening_normal() const;
 
 protected:
     virtual bool on_init();

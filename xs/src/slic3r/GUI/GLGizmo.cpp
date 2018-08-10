@@ -110,7 +110,7 @@ int GLGizmoBase::get_hover_id() const
 
 void GLGizmoBase::set_hover_id(int id)
 {
-    if (id < (int)m_grabbers.size())
+    //if (id < (int)m_grabbers.size())
         m_hover_id = id;
 }
 
@@ -503,15 +503,9 @@ void GLGizmoScale::on_render_for_picking(const BoundingBoxf3& box) const
 }
 
 
-///////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////
-const float GLGizmoFlatten::Offset = 5.0f;
-
 GLGizmoFlatten::GLGizmoFlatten()
-    : GLGizmoBase()
+    : GLGizmoBase(),
+      m_normal(Pointf3(0.f, 0.f, 0.f))
 {}
 
 
@@ -531,18 +525,13 @@ bool GLGizmoFlatten::on_init()
     if (!m_textures[On].load_from_file(filename, false))
         return false;
 
-    for (unsigned int i = 0; i < 4; ++i)
-    {
-        m_grabbers.push_back(Grabber());
-    }
-
     return true;
 }
 
 void GLGizmoFlatten::on_start_dragging()
 {
     if (m_hover_id != -1)
-        m_starting_drag_position = m_grabbers[m_hover_id].center;
+        m_normal = m_planes[m_hover_id].normal;
 }
 
 void GLGizmoFlatten::on_update(const Pointf& mouse_pos)
@@ -558,38 +547,24 @@ void GLGizmoFlatten::on_update(const Pointf& mouse_pos)
 
 void GLGizmoFlatten::on_render(const BoundingBoxf3& box) const
 {
+    bool blending_was_enabled = ::glIsEnabled(GL_BLEND);
+    ::glEnable(GL_BLEND);
     ::glDisable(GL_DEPTH_TEST);
 
-    coordf_t min_x = box.min.x - (coordf_t)Offset;
-    coordf_t max_x = box.max.x + (coordf_t)Offset;
-    coordf_t min_y = box.min.y - (coordf_t)Offset;
-    coordf_t max_y = box.max.y + (coordf_t)Offset;
+    for (int i=0; i<(int)m_planes.size(); ++i) {
+        if (i == m_hover_id)
+            ::glColor4f(0.9f, 0.9f, 0.9f, 0.75f);
+            else
+                ::glColor4f(0.9f, 0.9f, 0.9f, 0.5f);
 
-    m_grabbers[0].center.x = min_x;
-    m_grabbers[0].center.y = min_y;
-    m_grabbers[1].center.x = max_x;
-    m_grabbers[1].center.y = min_y;
-    m_grabbers[2].center.x = max_x;
-    m_grabbers[2].center.y = max_y;
-    m_grabbers[3].center.x = min_x;
-    m_grabbers[3].center.y = max_y;
-
-    ::glLineWidth(2.0f);
-    ::glColor3fv(BaseColor);
-    // draw outline
-    ::glBegin(GL_LINE_LOOP);
-    for (unsigned int i = 0; i < 4; ++i)
-    {
-        ::glVertex3f((GLfloat)m_grabbers[i].center.x, (GLfloat)m_grabbers[i].center.y, 0.0f);
+        ::glBegin(GL_POLYGON);
+        for (const auto& vertex : m_planes[i].vertices)
+            ::glVertex3f((GLfloat)vertex.x, (GLfloat)vertex.y, (GLfloat)vertex.z);
+        ::glEnd();
     }
-    ::glEnd();
 
-    // draw grabbers
-    for (unsigned int i = 0; i < 4; ++i)
-    {
-        ::memcpy((void*)m_grabbers[i].color, (const void*)HighlightColor, 3 * sizeof(float));
-    }
-    render_grabbers();
+    if (!blending_was_enabled)
+        ::glDisable(GL_BLEND);
 }
 
 void GLGizmoFlatten::on_render_for_picking(const BoundingBoxf3& box) const
@@ -598,14 +573,38 @@ void GLGizmoFlatten::on_render_for_picking(const BoundingBoxf3& box) const
 
     ::glDisable(GL_DEPTH_TEST);
 
-    for (unsigned int i = 0; i < 4; ++i)
+    for (unsigned int i = 0; i < m_planes.size(); ++i)
     {
-        m_grabbers[i].color[0] = 1.0f;
-        m_grabbers[i].color[1] = 1.0f;
-        m_grabbers[i].color[2] = (254.0f - (float)i) * INV_255;
+        ::glColor3f(1.f, 1.f, (254.0f - (float)i) * INV_255);
+        ::glBegin(GL_POLYGON);
+        for (const auto& vertex : m_planes[i].vertices)
+            ::glVertex3f((GLfloat)vertex.x, (GLfloat)vertex.y, (GLfloat)vertex.z);
+        ::glEnd();
     }
-    render_grabbers();
 }
+
+void GLGizmoFlatten::set_flattening_data(std::vector<Pointf3s> vertices_list)
+{
+    // Each entry in vertices_list describe one polygon that can be laid flat.
+    // All points but the last one are vertices of the polygon, the last "point" is the outer normal vector.
+
+    m_planes.clear();
+    m_planes.reserve(vertices_list.size());
+
+    for (const auto& plane_data : vertices_list) {
+        m_planes.emplace_back(PlaneData());
+        for (unsigned int i=0; i<plane_data.size()-1; ++i)
+            m_planes.back().vertices.emplace_back(plane_data[i]);
+        m_planes.back().normal = plane_data.back();
+    }
+}
+
+Pointf3 GLGizmoFlatten::get_flattening_normal() const {
+    Pointf3 normal = m_normal;
+    m_normal = Pointf3(0.f, 0.f, 0.f);
+    return normal;
+}
+
 
 
 

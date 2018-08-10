@@ -383,7 +383,8 @@ public:
         float get_angle_z() const;
         void set_angle_z(float angle_z);
 
-        void set_flat_vertices(std::vector<Pointf3s> vertices_list);
+        void set_flattening_data(std::vector<Pointf3s> vertices_list);
+        Pointf3 get_flattening_normal() const;
 
         void render(const GLCanvas3D& canvas, const BoundingBoxf3& box) const;
         void render_current_gizmo_for_picking_pass(const BoundingBoxf3& box) const;
