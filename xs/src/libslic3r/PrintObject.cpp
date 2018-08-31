@@ -1333,7 +1333,10 @@ std::vector<ExPolygons> PrintObject::_slice_region(size_t region_id, const std::
                 // transform mesh
                 // we ignore the per-instance transformations currently and only 
                 // consider the first one
-                this->model_object()->instances.front()->transform_mesh(&mesh, true);
+//##############################################################################################################################################################
+                this->model_object()->instances.front()->transform_mesh(mesh, true);
+//                this->model_object()->instances.front()->transform_mesh(&mesh, true);
+//##############################################################################################################################################################
                 // align mesh to Z = 0 (it should be already aligned actually) and apply XY shift
                 mesh.translate(- unscale<float>(this->_copies_shift(0)), - unscale<float>(this->_copies_shift(1)), - float(this->model_object()->bounding_box().min(2)));
                 // perform actual slicing

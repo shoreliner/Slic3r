@@ -30,7 +30,10 @@ std::string toString(const Model& model, bool holes = true) {
 
             Slic3r::TriangleMesh tmpmesh = rmesh;
             tmpmesh.scale(objinst->scaling_factor);
-            objinst->transform_mesh(&tmpmesh);
+//##############################################################################################################################################################
+            objinst->transform_mesh(tmpmesh);
+//            objinst->transform_mesh(&tmpmesh);
+//##############################################################################################################################################################
             ExPolygons expolys = tmpmesh.horizontal_projection();
             for(auto& expoly_complex : expolys) {
 
@@ -88,7 +91,10 @@ void toSVG(SVG& svg, const Model& model) {
 
             Slic3r::TriangleMesh tmpmesh = rmesh;
             tmpmesh.scale(objinst->scaling_factor);
-            objinst->transform_mesh(&tmpmesh);
+//##############################################################################################################################################################
+            objinst->transform_mesh(tmpmesh);
+//            objinst->transform_mesh(&tmpmesh);
+//##############################################################################################################################################################
             ExPolygons expolys = tmpmesh.horizontal_projection();
             svg.draw(expolys);
         }
@@ -509,8 +515,11 @@ ShapeData2D projectModelFromTop(const Slic3r::Model &model) {
 
                     // Invalid geometries would throw exceptions when arranging
                     if(item.vertexCount() > 3) {
-                        item.rotation(objinst->rotation);
-                        item.translation( {
+//##############################################################################################################################################################
+                        item.rotation(objinst->rotation(2));
+//                        item.rotation(objinst->rotation);
+//##############################################################################################################################################################
+                        item.translation({
                             ClipperLib::cInt(objinst->offset(0)/SCALING_FACTOR),
                             ClipperLib::cInt(objinst->offset(1)/SCALING_FACTOR)
                         });
@@ -652,8 +661,13 @@ void applyResult(
         Vec2d foff(off.X*SCALING_FACTOR + batch_offset, off.Y*SCALING_FACTOR);
 
         // write the tranformation data into the model instance
-        inst_ptr->rotation = rot;
-        inst_ptr->offset = foff;
+//##############################################################################################################################################################
+        inst_ptr->rotation(2) = rot;
+        inst_ptr->offset(0) = foff(0);
+        inst_ptr->offset(1) = foff(1);
+//        inst_ptr->rotation = rot;
+//        inst_ptr->offset = foff;
+//##############################################################################################################################################################
     }
 }
 

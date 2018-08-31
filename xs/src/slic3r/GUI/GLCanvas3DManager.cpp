@@ -674,12 +674,20 @@ void GLCanvas3DManager::register_on_enable_action_buttons_callback(wxGLCanvas* c
         it->second->register_on_enable_action_buttons_callback(callback);
 }
 
-void GLCanvas3DManager::register_on_gizmo_scale_uniformly_callback(wxGLCanvas* canvas, void* callback)
+//##############################################################################################################################################################
+void GLCanvas3DManager::register_on_gizmo_scale_callback(wxGLCanvas* canvas, void* callback)
 {
     CanvasesMap::iterator it = _get_canvas(canvas);
     if (it != m_canvases.end())
-        it->second->register_on_gizmo_scale_uniformly_callback(callback);
+        it->second->register_on_gizmo_scale_callback(callback);
 }
+//void GLCanvas3DManager::register_on_gizmo_scale_uniformly_callback(wxGLCanvas* canvas, void* callback)
+//{
+//    CanvasesMap::iterator it = _get_canvas(canvas);
+//    if (it != m_canvases.end())
+//        it->second->register_on_gizmo_scale_uniformly_callback(callback);
+//}
+//##############################################################################################################################################################
 
 void GLCanvas3DManager::register_on_gizmo_rotate_callback(wxGLCanvas* canvas, void* callback)
 {
@@ -687,6 +695,15 @@ void GLCanvas3DManager::register_on_gizmo_rotate_callback(wxGLCanvas* canvas, vo
     if (it != m_canvases.end())
         it->second->register_on_gizmo_rotate_callback(callback);
 }
+
+//##############################################################################################################################################################
+void GLCanvas3DManager::register_on_gizmo_flatten_callback(wxGLCanvas* canvas, void* callback)
+{
+    CanvasesMap::iterator it = _get_canvas(canvas);
+    if (it != m_canvases.end())
+        it->second->register_on_gizmo_flatten_callback(callback);
+}
+//##############################################################################################################################################################
 
 void GLCanvas3DManager::register_on_update_geometry_info_callback(wxGLCanvas* canvas, void* callback)
 {

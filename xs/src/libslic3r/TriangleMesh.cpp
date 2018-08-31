@@ -267,6 +267,17 @@ void TriangleMesh::rotate(float angle, const Vec3d& axis)
     stl_transform(&stl, (float*)m.data());
 }
 
+//##############################################################################################################################################################
+void TriangleMesh::rotate(const Vec3d& angles)
+{
+    Transform3f m = Transform3f::Identity();
+    m.rotate(Eigen::AngleAxisf(angles(2), Vec3f::UnitZ()));
+    m.rotate(Eigen::AngleAxisf(angles(1), Vec3f::UnitY()));
+    m.rotate(Eigen::AngleAxisf(angles(0), Vec3f::UnitX()));
+    stl_transform(&stl, (float*)m.data());
+}
+//##############################################################################################################################################################
+
 void TriangleMesh::mirror(const Axis &axis)
 {
     if (axis == X) {
@@ -278,6 +289,13 @@ void TriangleMesh::mirror(const Axis &axis)
     }
     stl_invalidate_shared_vertices(&this->stl);
 }
+
+//##############################################################################################################################################################
+void TriangleMesh::transform(const Transform3f& t)
+{
+    stl_transform(&stl, (float*)t.data());
+}
+//##############################################################################################################################################################
 
 void TriangleMesh::align_to_origin()
 {

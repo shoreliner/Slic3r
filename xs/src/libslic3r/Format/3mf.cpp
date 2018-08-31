@@ -1254,45 +1254,72 @@ namespace Slic3r {
         // we extract from the given matrix only the values currently used
 
         // translation
-        double offset_x = transform(0, 3);
-        double offset_y = transform(1, 3);
-        double offset_z = transform(2, 3);
+//##############################################################################################################################################################
+        Vec3d offset(transform(0, 3), transform(1, 3), transform(2, 3));
+//        double offset_x = transform(0, 3);
+//        double offset_y = transform(1, 3);
+//        double offset_z = transform(2, 3);
+//##############################################################################################################################################################
 
         // scale
-        double sx = ::sqrt(sqr(transform(0, 0)) + sqr(transform(1, 0)) + sqr(transform(2, 0)));
-        double sy = ::sqrt(sqr(transform(0, 1)) + sqr(transform(1, 1)) + sqr(transform(2, 1)));
-        double sz = ::sqrt(sqr(transform(0, 2)) + sqr(transform(1, 2)) + sqr(transform(2, 2)));
+//##############################################################################################################################################################
+        Vec3d scale;
+        scale(0) = ::sqrt(sqr(transform(0, 0)) + sqr(transform(1, 0)) + sqr(transform(2, 0)));
+        scale(1) = ::sqrt(sqr(transform(0, 1)) + sqr(transform(1, 1)) + sqr(transform(2, 1)));
+        scale(2) = ::sqrt(sqr(transform(0, 2)) + sqr(transform(1, 2)) + sqr(transform(2, 2)));
+//        double sx = ::sqrt(sqr(transform(0, 0)) + sqr(transform(1, 0)) + sqr(transform(2, 0)));
+//        double sy = ::sqrt(sqr(transform(0, 1)) + sqr(transform(1, 1)) + sqr(transform(2, 1)));
+//        double sz = ::sqrt(sqr(transform(0, 2)) + sqr(transform(1, 2)) + sqr(transform(2, 2)));
+//##############################################################################################################################################################
 
         // invalid scale value, return
-        if ((sx == 0.0) || (sy == 0.0) || (sz == 0.0))
+//##############################################################################################################################################################
+        if ((scale(0) == 0.0) || (scale(1) == 0.0) || (scale(2) == 0.0))
+//        if ((sx == 0.0) || (sy == 0.0) || (sz == 0.0))
+//##############################################################################################################################################################
             return;
 
-        // non-uniform scale value, return
-        if ((std::abs(sx - sy) > 0.00001) || (std::abs(sx - sz) > 0.00001))
-            return;
+//##############################################################################################################################################################
+//        // non-uniform scale value, return
+//        if ((std::abs(sx - sy) > 0.00001) || (std::abs(sx - sz) > 0.00001))
+//            return;
+//##############################################################################################################################################################
 
-        double inv_sx = 1.0 / sx;
-        double inv_sy = 1.0 / sy;
-        double inv_sz = 1.0 / sz;
+//##############################################################################################################################################################
+        double inv_sx = 1.0 / scale(0);
+        double inv_sy = 1.0 / scale(1);
+        double inv_sz = 1.0 / scale(2);
+//        double inv_sx = 1.0 / sx;
+//        double inv_sy = 1.0 / sy;
+//        double inv_sz = 1.0 / sz;
+//##############################################################################################################################################################
 
         Eigen::Matrix3d m3x3;
         m3x3 << transform(0, 0) * inv_sx, transform(0, 1) * inv_sy, transform(0, 2) * inv_sz,
                 transform(1, 0) * inv_sx, transform(1, 1) * inv_sy, transform(1, 2) * inv_sz,
                 transform(2, 0) * inv_sx, transform(2, 1) * inv_sy, transform(2, 2) * inv_sz;
 
-        Eigen::AngleAxisd rotation;
-        rotation.fromRotationMatrix(m3x3);
+//##############################################################################################################################################################
+//        // invalid rotation axis, we currently handle only rotations around Z axis
+//        if ((rotation.angle() != 0.0) && (rotation.axis() != Vec3d::UnitZ()) && (rotation.axis() != -Vec3d::UnitZ()))
+//            return;
+//##############################################################################################################################################################
 
-        // invalid rotation axis, we currently handle only rotations around Z axis
-        if ((rotation.angle() != 0.0) && (rotation.axis() != Vec3d::UnitZ()) && (rotation.axis() != -Vec3d::UnitZ()))
-            return;
+//##############################################################################################################################################################
+        Vec3d angles = m3x3.eulerAngles(0, 1, 2);
+//        double angle_z = (rotation.axis() == Vec3d::UnitZ()) ? rotation.angle() : -rotation.angle();
+//##############################################################################################################################################################
 
-        double angle_z = (rotation.axis() == Vec3d::UnitZ()) ? rotation.angle() : -rotation.angle();
+//##############################################################################################################################################################
+        instance.offset = offset;
+        instance.scaling_factor = scale;
+        instance.rotation = angles;
 
-        instance.offset(0) = offset_x;
-        instance.offset(1) = offset_y;
-        instance.scaling_factor = sx;
-        instance.rotation = angle_z;
+//        instance.offset(0) = offset_x;
+//        instance.offset(1) = offset_y;
+//        instance.scaling_factor = sx;
+//        instance.rotation = angle_z;
+//##############################################################################################################################################################
     }
 
     bool _3MF_Importer::_handle_start_config(const char** attributes, unsigned int num_attributes)
@@ -1738,11 +1765,15 @@ namespace Slic3r {
                 stream << "   </" << COMPONENTS_TAG << ">\n";
             }
 
-            Transform3d t = Transform3d::Identity();
-            t.translate(Vec3d(instance->offset(0), instance->offset(1), 0.0));
-            t.rotate(Eigen::AngleAxisd(instance->rotation, Vec3d::UnitZ()));
-            t.scale(instance->scaling_factor);
-            build_items.emplace_back(instance_id, t);
+//##############################################################################################################################################################
+            build_items.emplace_back(instance_id, instance->world_matrix(false));
+
+//            Transform3d t = Transform3d::Identity();
+//            t.translate(Vec3d(instance->offset(0), instance->offset(1), 0.0));
+//            t.rotate(Eigen::AngleAxisd(instance->rotation, Vec3d::UnitZ()));
+//            t.scale(instance->scaling_factor);
+//            build_items.emplace_back(instance_id, t);
+//##############################################################################################################################################################
 
             stream << "  </" << OBJECT_TAG << ">\n";
 

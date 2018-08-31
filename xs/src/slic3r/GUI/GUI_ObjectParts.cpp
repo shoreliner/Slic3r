@@ -1368,13 +1368,26 @@ void update_settings_value()
 {
 	auto og = get_optgroup(ogFrequentlyObjectSettings);
 	if (m_selected_object_id < 0 || m_objects->size() <= m_selected_object_id) {
-		og->set_value("scale_x", 0);
+//##############################################################################################################################################################
+        og->set_value("position_x", 0);
+        og->set_value("position_y", 0);
+        og->set_value("position_z", 0);
+//##############################################################################################################################################################
+        og->set_value("scale_x", 0);
 		og->set_value("scale_y", 0);
 		og->set_value("scale_z", 0);
+//##############################################################################################################################################################
+        og->set_value("rotation_x", 0);
+        og->set_value("rotation_y", 0);
+        og->set_value("rotation_z", 0);
+//##############################################################################################################################################################
         og->disable();
 		return;
 	}
     g_is_percent_scale = boost::any_cast<wxString>(og->get_value("scale_unit")) == _("%");
+//##############################################################################################################################################################
+    update_position_values();
+//##############################################################################################################################################################
     update_scale_values();
     update_rotation_values();
     og->enable();
@@ -1533,52 +1546,93 @@ void update_extruder_in_config(const wxString& selection)
     }
 }
 
-void update_scale_values()
-{
-    update_scale_values((*m_objects)[m_selected_object_id]->instance_bounding_box(0).size(),
-                        (*m_objects)[m_selected_object_id]->instances[0]->scaling_factor);
-}
-
-void update_scale_values(const Vec3d& size, float scaling_factor)
+//##############################################################################################################################################################
+void update_position_values()
 {
     auto og = get_optgroup(ogFrequentlyObjectSettings);
+    auto instance = (*m_objects)[m_selected_object_id]->instances.front();
+
+    og->set_value("position_x", int(instance->offset(0)));
+    og->set_value("position_y", int(instance->offset(1)));
+    og->set_value("position_z", int(instance->offset(2)));
+}
+//##############################################################################################################################################################
+
+void update_scale_values()
+{
+//##############################################################################################################################################################
+    auto og = get_optgroup(ogFrequentlyObjectSettings);
+    auto instance = (*m_objects)[m_selected_object_id]->instances.front();
+    auto size = (*m_objects)[m_selected_object_id]->instance_bounding_box(0).size();
 
     if (g_is_percent_scale) {
-        auto scale = scaling_factor * 100;
-        og->set_value("scale_x", int(scale));
-        og->set_value("scale_y", int(scale));
-        og->set_value("scale_z", int(scale));
+        auto scale = instance->scaling_factor * 100;
+        og->set_value("scale_x", int(scale(0)));
+        og->set_value("scale_y", int(scale(1)));
+        og->set_value("scale_z", int(scale(2)));
     }
     else {
-        og->set_value("scale_x", int(size(0) + 0.5));
-        og->set_value("scale_y", int(size(1) + 0.5));
-        og->set_value("scale_z", int(size(2) + 0.5));
+        og->set_value("scale_x", int(instance->scaling_factor(0) * size(0) + 0.5));
+        og->set_value("scale_y", int(instance->scaling_factor(1) * size(1) + 0.5));
+        og->set_value("scale_z", int(instance->scaling_factor(2) * size(2) + 0.5));
     }
+
+//    update_scale_values((*m_objects)[m_selected_object_id]->instance_bounding_box(0).size(),
+//                        (*m_objects)[m_selected_object_id]->instances[0]->scaling_factor);
+//##############################################################################################################################################################
 }
+
+//##############################################################################################################################################################
+//void update_scale_values(const Vec3d& size, float scaling_factor)
+//{
+//    auto og = get_optgroup(ogFrequentlyObjectSettings);
+//
+//    if (g_is_percent_scale) {
+//        auto scale = scaling_factor * 100;
+//        og->set_value("scale_x", int(scale));
+//        og->set_value("scale_y", int(scale));
+//        og->set_value("scale_z", int(scale));
+//    }
+//    else {
+//        og->set_value("scale_x", int(size(0) + 0.5));
+//        og->set_value("scale_y", int(size(1) + 0.5));
+//        og->set_value("scale_z", int(size(2) + 0.5));
+//    }
+//}
+//##############################################################################################################################################################
 
 void update_rotation_values()
 {
     auto og = get_optgroup(ogFrequentlyObjectSettings);
+//##############################################################################################################################################################
+    auto instance = (*m_objects)[m_selected_object_id]->instances.front();
+    og->set_value("rotation_x", int(Geometry::rad2deg(instance->rotation(0))));
+    og->set_value("rotation_y", int(Geometry::rad2deg(instance->rotation(1))));
+    og->set_value("rotation_z", int(Geometry::rad2deg(instance->rotation(2))));
 
-    og->set_value("rotation_x", 0);
-    og->set_value("rotation_y", 0);
 
-    auto rotation_z = (*m_objects)[m_selected_object_id]->instances[0]->rotation;
-    auto deg = int(Geometry::rad2deg(rotation_z));
-//     if (deg > 180) deg -= 360;
-
-    og->set_value("rotation_z", deg);
+//    og->set_value("rotation_x", 0);
+//    og->set_value("rotation_y", 0);
+//
+//    auto rotation_z = (*m_objects)[m_selected_object_id]->instances[0]->rotation;
+//    auto deg = int(Geometry::rad2deg(rotation_z));
+////     if (deg > 180) deg -= 360;
+//
+//    og->set_value("rotation_z", deg);
+//##############################################################################################################################################################
 }
 
-void update_rotation_value(const double angle, const std::string& axis)
-{
-    auto og = get_optgroup(ogFrequentlyObjectSettings);
-    
-    int deg = int(Geometry::rad2deg(angle));
-//     if (deg>180) deg -= 360;
-
-    og->set_value("rotation_"+axis, deg);
-}
+//##############################################################################################################################################################
+//void update_rotation_value(const double angle, const std::string& axis)
+//{
+//    auto og = get_optgroup(ogFrequentlyObjectSettings);
+//    
+//    int deg = int(Geometry::rad2deg(angle));
+////     if (deg>180) deg -= 360;
+//
+//    og->set_value("rotation_"+axis, deg);
+//}
+//##############################################################################################################################################################
 
 void set_uniform_scaling(const bool uniform_scale)
 {

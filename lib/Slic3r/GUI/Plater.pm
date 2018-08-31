@@ -103,6 +103,9 @@ sub new {
         $menu->Destroy;
     };
     my $on_instances_moved = sub {
+#=====================================================================================================================================        
+        Slic3r::GUI::update_position_values();
+#=====================================================================================================================================        
         $self->update;
     };
     
@@ -116,8 +119,12 @@ sub new {
     };
 
     # callback to react to gizmo scale
-    my $on_gizmo_scale_uniformly = sub {
-        my ($scale) = @_;
+#=====================================================================================================================================        
+    my $on_gizmo_scale = sub {
+        my ($scale_x, $scale_y, $scale_z) = @_;
+#    my $on_gizmo_scale_uniformly = sub {
+#        my ($scale) = @_;
+#=====================================================================================================================================        
 
         my ($obj_idx, $object) = $self->selected_object;
         return if !defined $obj_idx;
@@ -127,16 +134,29 @@ sub new {
 
         $self->stop_background_process;
         
-        my $variation = $scale / $model_instance->scaling_factor;
+#=====================================================================================================================================        
+        my $variation_z = $scale_z / $model_instance->scaling_factor->[2];
         #FIXME Scale the layer height profile?
         foreach my $range (@{ $model_object->layer_height_ranges }) {
-            $range->[0] *= $variation;
-            $range->[1] *= $variation;
+            $range->[0] *= $variation_z;
+            $range->[1] *= $variation_z;
         }
-        $_->set_scaling_factor($scale) for @{ $model_object->instances };
         
-        # Set object scale on c++ side
-#        Slic3r::GUI::set_object_scale($obj_idx, $model_object->instances->[0]->scaling_factor * 100); 
+        $_->set_scaling_factor($scale_x, $scale_y, $scale_z) for @{ $model_object->instances };
+        
+        Slic3r::GUI::_3DScene::update_gizmos_data($self->{canvas3D}) if ($self->{canvas3D});            
+        Slic3r::GUI::update_scale_values();
+#        my $variation = $scale / $model_instance->scaling_factor;
+#        #FIXME Scale the layer height profile?
+#        foreach my $range (@{ $model_object->layer_height_ranges }) {
+#            $range->[0] *= $variation;
+#            $range->[1] *= $variation;
+#        }        
+#        $_->set_scaling_factor($scale) for @{ $model_object->instances };
+#        
+#        # Set object scale on c++ side
+##        Slic3r::GUI::set_object_scale($obj_idx, $model_object->instances->[0]->scaling_factor * 100); 
+#=====================================================================================================================================        
 
 #        $object->transform_thumbnail($self->{model}, $obj_idx);
     
@@ -148,33 +168,64 @@ sub new {
         $self->schedule_background_process;
     };
     
+#=====================================================================================================================================        
     # callback to react to gizmo rotate
-    # omitting last three parameters means rotation around Z
-    # otherwise they are the components of the rotation axis vector
     my $on_gizmo_rotate = sub {
-        my ($angle, $axis_x, $axis_y, $axis_z) = @_;
-        if (!defined $axis_x) {
-            $self->rotate(rad2deg($angle), Z, 'absolute');
-        }
-        else {
-            $self->rotate(rad2deg($angle), undef, 'absolute', $axis_x, $axis_y, $axis_z) if $angle != 0;
-        }
+        my ($angle_x, $angle_y, $angle_z) = @_;        
+        $self->on_rotate_from_gizmo($angle_x, $angle_y, $angle_z);        
     };
+#    # callback to react to gizmo rotate
+#    # omitting last three parameters means rotation around Z
+#    # otherwise they are the components of the rotation axis vector
+#    my $on_gizmo_rotate = sub {
+#        my ($angle, $axis_x, $axis_y, $axis_z) = @_;
+#        if (!defined $axis_x) {
+#            $self->rotate(rad2deg($angle), Z, 'absolute');
+#        }
+#        else {
+#            $self->rotate(rad2deg($angle), undef, 'absolute', $axis_x, $axis_y, $axis_z) if $angle != 0;
+#        }
+#    };
+#=====================================================================================================================================        
+
+#=====================================================================================================================================        
+    # callback to react to gizmo flatten
+    my $on_gizmo_flatten = sub {
+        my ($angle_x, $angle_y, $angle_z) = @_;
+        $self->on_rotate_from_gizmo($angle_x, $angle_y, $angle_z);
+#        $self->rotate(rad2deg($angle), undef, 'absolute', $axis_x, $axis_y, $axis_z) if $angle != 0;
+    };
+#=====================================================================================================================================        
 
     # callback to update object's geometry info while using gizmos
+#=====================================================================================================================================        
     my $on_update_geometry_info = sub {
-        my ($size_x, $size_y, $size_z, $scale_factor) = @_;
-    
+        my ($size_x, $size_y, $size_z, $scale_x, $scale_y, $scale_z) = @_;
+        
         my ($obj_idx, $object) = $self->selected_object;
     
         if ((defined $obj_idx) && ($self->{object_info_size})) { # have we already loaded the info pane?
             $self->{object_info_size}->SetLabel(sprintf("%.2f x %.2f x %.2f", $size_x, $size_y, $size_z));
             my $model_object = $self->{model}->objects->[$obj_idx];
             if (my $stats = $model_object->mesh_stats) {
-                $self->{object_info_volume}->SetLabel(sprintf('%.2f', $stats->{volume} * $scale_factor**3));
+                $self->{object_info_volume}->SetLabel(sprintf('%.2f', $stats->{volume} * $scale_x * $scale_y * $scale_z));
             }
         }
     };
+#    my $on_update_geometry_info = sub {
+#        my ($size_x, $size_y, $size_z, $scale_factor) = @_;
+#    
+#        my ($obj_idx, $object) = $self->selected_object;
+#    
+#        if ((defined $obj_idx) && ($self->{object_info_size})) { # have we already loaded the info pane?
+#            $self->{object_info_size}->SetLabel(sprintf("%.2f x %.2f x %.2f", $size_x, $size_y, $size_z));
+#            my $model_object = $self->{model}->objects->[$obj_idx];
+#            if (my $stats = $model_object->mesh_stats) {
+#                $self->{object_info_volume}->SetLabel(sprintf('%.2f', $stats->{volume} * $scale_factor**3));
+#            }
+#        }
+#    };
+#=====================================================================================================================================        
 
     # callbacks for toolbar
     my $on_action_add = sub {
@@ -234,8 +285,14 @@ sub new {
         Slic3r::GUI::_3DScene::register_on_remove_object_callback($self->{canvas3D}, sub { $self->remove() });
         Slic3r::GUI::_3DScene::register_on_instance_moved_callback($self->{canvas3D}, $on_instances_moved);
         Slic3r::GUI::_3DScene::register_on_enable_action_buttons_callback($self->{canvas3D}, $enable_action_buttons);
-        Slic3r::GUI::_3DScene::register_on_gizmo_scale_uniformly_callback($self->{canvas3D}, $on_gizmo_scale_uniformly);
+#=====================================================================================================================================        
+        Slic3r::GUI::_3DScene::register_on_gizmo_scale_callback($self->{canvas3D}, $on_gizmo_scale);
+#        Slic3r::GUI::_3DScene::register_on_gizmo_scale_uniformly_callback($self->{canvas3D}, $on_gizmo_scale_uniformly);
+#=====================================================================================================================================        
         Slic3r::GUI::_3DScene::register_on_gizmo_rotate_callback($self->{canvas3D}, $on_gizmo_rotate);
+#=====================================================================================================================================        
+        Slic3r::GUI::_3DScene::register_on_gizmo_flatten_callback($self->{canvas3D}, $on_gizmo_flatten);
+#=====================================================================================================================================        
         Slic3r::GUI::_3DScene::register_on_update_geometry_info_callback($self->{canvas3D}, $on_update_geometry_info);
         Slic3r::GUI::_3DScene::register_action_add_callback($self->{canvas3D}, $on_action_add);
         Slic3r::GUI::_3DScene::register_action_delete_callback($self->{canvas3D}, $on_action_delete);
@@ -669,6 +726,32 @@ sub new {
     return $self;
 }
 
+#=====================================================================================================================================        
+sub on_rotate_from_gizmo {
+    my ($self, $angle_x, $angle_y, $angle_z) = @_;
+    
+    my ($obj_idx, $object) = $self->selected_object;
+    return if !defined $obj_idx;
+
+    my $model_object = $self->{model}->objects->[$obj_idx];
+
+    $self->stop_background_process;
+
+    my $angles = Slic3r::Pointf3->new($angle_x, $angle_y, $angle_z);
+    $_->set_rotations($angles) for @{ $model_object->instances };
+
+    Slic3r::GUI::_3DScene::update_gizmos_data($self->{canvas3D}) if ($self->{canvas3D});            
+    Slic3r::GUI::update_rotation_values();
+
+    # update print and start background processing
+    $self->{print}->add_model_object($model_object, $obj_idx);
+
+    $self->selection_changed;  # refresh info (size etc.)
+    $self->update;
+    $self->schedule_background_process;        
+}
+#=====================================================================================================================================        
+
 # sets the callback
 sub on_select_preset {
     my ($self, $cb) = @_;
@@ -900,7 +983,10 @@ sub load_model_objects {
         
             # add a default instance and center object around origin
             $o->center_around_origin;  # also aligns object to Z = 0
-            $o->add_instance(offset => $bed_centerf);
+#=====================================================================================================================================        
+            $o->add_instance(offset => Slic3r::Pointf3->new($bed_centerf->[0], $bed_centerf->[1], 0.0));
+#            $o->add_instance(offset => $bed_centerf);
+#=====================================================================================================================================        
         }
         
         {
@@ -1022,13 +1108,25 @@ sub increase {
     return if ! defined $obj_idx;
     my $model_object = $self->{model}->objects->[$obj_idx];
     my $instance = $model_object->instances->[-1];
+#=====================================================================================================================================
+    my $size_x = ($model_object->instances_count() > 1) ? $model_object->instance_bounding_box(0)->size()->[0] : $model_object->bounding_box()->size()->[0];
+#=====================================================================================================================================        
     for my $i (1..$copies) {
         $instance = $model_object->add_instance(
-            offset          => Slic3r::Pointf->new(map 10+$_, @{$instance->offset}),
-            scaling_factor  => $instance->scaling_factor,
-            rotation        => $instance->rotation,
+#=====================================================================================================================================        
+            offset          => Slic3r::Pointf3->new($size_x + $instance->offset->[0], $instance->offset->[1], $instance->offset->[2]),
+            scaling_factor  => Slic3r::Pointf3->new($instance->scaling_factor->[0], $instance->scaling_factor->[1], $instance->scaling_factor->[2]),
+            rotation        => Slic3r::Pointf3->new($instance->rotation->[0], $instance->rotation->[1], $instance->rotation->[2])
+            
+#            offset          => Slic3r::Pointf->new(map 10+$_, @{$instance->offset}),
+#            scaling_factor  => $instance->scaling_factor,
+#            rotation        => $instance->rotation,
+#=====================================================================================================================================        
         );
-        $self->{print}->objects->[$obj_idx]->add_copy($instance->offset);
+#=====================================================================================================================================        
+        $self->{print}->objects->[$obj_idx]->add_copy(Slic3r::Pointf->new($instance->offset->[0], $instance->offset->[1]));
+#        $self->{print}->objects->[$obj_idx]->add_copy($instance->offset);
+#=====================================================================================================================================        
     }
     # Set conut of object on c++ side
     Slic3r::GUI::set_object_count($obj_idx, $model_object->instances_count);
@@ -1183,9 +1281,12 @@ sub rotate {
 #        $self->reset_thumbnail($obj_idx);
     }
     
-    if (defined $axis) {
-        Slic3r::GUI::update_rotation_value(deg2rad($angle), $axis == X ? "x" : ($axis == Y ? "y" : "z"));
-    }
+#========================================================================================================================================    
+    Slic3r::GUI::update_rotation_values();
+#    if (defined $axis) {
+#        Slic3r::GUI::update_rotation_value(deg2rad($angle), $axis == X ? "x" : ($axis == Y ? "y" : "z"));
+#    }
+#========================================================================================================================================    
     
     # update print and start background processing
     $self->{print}->add_model_object($model_object, $obj_idx);
@@ -2352,7 +2453,10 @@ sub selection_changed {
             $self->{object_info_materials}->SetLabel($model_object->materials_count);
             
             if (my $stats = $model_object->mesh_stats) {
-                $self->{object_info_volume}->SetLabel(sprintf('%.2f', $stats->{volume} * ($model_instance->scaling_factor**3)));
+#===================================================================================================================================================================================            
+                $self->{object_info_volume}->SetLabel(sprintf('%.2f', $stats->{volume} * ($model_instance->scaling_factor->[0]*$model_instance->scaling_factor->[1]* $model_instance->scaling_factor->[2])));
+#                $self->{object_info_volume}->SetLabel(sprintf('%.2f', $stats->{volume} * ($model_instance->scaling_factor**3)));
+#===================================================================================================================================================================================            
                 $self->{object_info_facets}->SetLabel(sprintf(L('%d (%d shells)'), $model_object->facets_count, $stats->{number_of_parts}));
                 if (my $errors = sum(@$stats{qw(degenerate_facets edges_fixed facets_removed facets_added facets_reversed backwards_edges)})) {
                     $self->{object_info_manifold}->SetLabel(sprintf(L("Auto-repaired (%d errors)"), $errors));

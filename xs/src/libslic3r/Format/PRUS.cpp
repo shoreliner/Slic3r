@@ -163,10 +163,16 @@ bool load_prus(const char *path, Model *model)
             const char *model_xml = strstr(scene_xml_data.data(), model_name_tag);
             const char *zero_tag  = "<zero>";
 			const char *zero_xml  = strstr(scene_xml_data.data(), zero_tag);
-            float  trafo[3][4] = { 0 };
-            double instance_rotation = 0.;
-            double instance_scaling_factor = 1.f;
-            Vec2d instance_offset(0., 0.); 
+//##############################################################################################################################################################
+            Transform3f trafo = Transform3f::Identity();
+            Vec3f instance_rotation = Vec3f::Zero();
+            Vec3f instance_scaling_factor = Vec3f::Ones();
+            Vec3f instance_offset = Vec3f::Zero();
+//            float  trafo[3][4] = { 0 };
+//            double instance_rotation = 0.;
+//            double instance_scaling_factor = 1.f;
+//            Vec2d instance_offset(0., 0.);
+//##############################################################################################################################################################
             bool   trafo_set = false;
             unsigned int group_id     = (unsigned int)-1;
             unsigned int extruder_id  = (unsigned int)-1;
@@ -189,27 +195,47 @@ bool load_prus(const char *path, Model *model)
                         "[%f, %f, %f]", scale, scale+1, scale+2) == 3 &&
                     sscanf(zero_xml+strlen(zero_tag), 
                         "[%f, %f, %f]", zero, zero+1, zero+2) == 3) {
-                    if (scale[0] == scale[1] && scale[1] == scale[2]) {
-                        instance_scaling_factor = scale[0];
-                        scale[0] = scale[1] = scale[2] = 1.;
-                    }
-                    if (rotation[0] == 0. && rotation[1] == 0.) {
-                        instance_rotation = - rotation[2];
-                        rotation[2] = 0.;
-                    }
-                    Eigen::Matrix3f mat_rot, mat_scale, mat_trafo;
-                    mat_rot = Eigen::AngleAxisf(-rotation[2], Eigen::Vector3f::UnitZ()) * 
-                              Eigen::AngleAxisf(-rotation[1], Eigen::Vector3f::UnitY()) *
-                              Eigen::AngleAxisf(-rotation[0], Eigen::Vector3f::UnitX());
-                    mat_scale = Eigen::Scaling(scale[0], scale[1], scale[2]);
-                    mat_trafo = mat_rot * mat_scale;
-                    for (size_t r = 0; r < 3; ++ r) {
-                        for (size_t c = 0; c < 3; ++ c)
-                            trafo[r][c] += mat_trafo(r, c);
-                    }
+//##############################################################################################################################################################
+                    instance_scaling_factor(0) = scale[0];
+                    instance_scaling_factor(1) = scale[0];
+                    instance_scaling_factor(2) = scale[0];
+
+                    instance_rotation(0) = -rotation[0];
+                    instance_rotation(1) = -rotation[1];
+                    instance_rotation(2) = -rotation[2];
+
                     instance_offset(0) = position[0] - zero[0];
                     instance_offset(1) = position[1] - zero[1];
-                    trafo[2][3] = position[2] / instance_scaling_factor;
+                    instance_offset(2) = position[2] - zero[2];
+
+                    trafo.translate(instance_offset);
+                    trafo.rotate(Eigen::AngleAxisf(instance_rotation(2), Vec3f::UnitZ()));
+                    trafo.rotate(Eigen::AngleAxisf(instance_rotation(1), Vec3f::UnitZ()));
+                    trafo.rotate(Eigen::AngleAxisf(instance_rotation(0), Vec3f::UnitX()));
+                    trafo.scale(instance_scaling_factor);
+
+//                    if (scale[0] == scale[1] && scale[1] == scale[2]) {
+//                        instance_scaling_factor = scale[0];
+//                        scale[0] = scale[1] = scale[2] = 1.;
+//                    }
+//                    if (rotation[0] == 0. && rotation[1] == 0.) {
+//                        instance_rotation = - rotation[2];
+//                        rotation[2] = 0.;
+//                    }
+//                    Eigen::Matrix3f mat_rot, mat_scale, mat_trafo;
+//                    mat_rot = Eigen::AngleAxisf(-rotation[2], Eigen::Vector3f::UnitZ()) * 
+//                              Eigen::AngleAxisf(-rotation[1], Eigen::Vector3f::UnitY()) *
+//                              Eigen::AngleAxisf(-rotation[0], Eigen::Vector3f::UnitX());
+//                    mat_scale = Eigen::Scaling(scale[0], scale[1], scale[2]);
+//                    mat_trafo = mat_rot * mat_scale;
+//                    for (size_t r = 0; r < 3; ++ r) {
+//                        for (size_t c = 0; c < 3; ++ c)
+//                            trafo[r][c] += mat_trafo(r, c);
+//                    }
+//                    instance_offset(0) = position[0] - zero[0];
+//                    instance_offset(1) = position[1] - zero[1];
+//                    trafo[2][3] = position[2] / instance_scaling_factor;
+//##############################################################################################################################################################
                     trafo_set = true;
                 }
                 const char *group_tag    = "<group>";
@@ -259,8 +285,11 @@ bool load_prus(const char *path, Model *model)
 							stl_get_size(&stl);
 							mesh.repair();
 							// Transform the model.
-							stl_transform(&stl, &trafo[0][0]);
-							if (std::abs(stl.stats.min(2)) < EPSILON)
+//##############################################################################################################################################################
+                            stl_transform(&stl, (float*)trafo.data());
+//                            stl_transform(&stl, &trafo[0][0]);
+//##############################################################################################################################################################
+                            if (std::abs(stl.stats.min(2)) < EPSILON)
 								stl.stats.min(2) = 0.;
 							// Add a mesh to a model.
 							if (mesh.facets_count() > 0)
@@ -343,7 +372,10 @@ bool load_prus(const char *path, Model *model)
                         stl_get_size(&stl);
                         mesh.repair();
                         // Transform the model.
-                        stl_transform(&stl, &trafo[0][0]);
+//##############################################################################################################################################################
+                        stl_transform(&stl, (float*)trafo.data());
+//                        stl_transform(&stl, &trafo[0][0]);
+//##############################################################################################################################################################
                         // Add a mesh to a model.
                         if (mesh.facets_count() > 0)
                             mesh_valid = true;
@@ -358,10 +390,15 @@ bool load_prus(const char *path, Model *model)
                         model_object = model->add_object(name_utf8.data(), path, std::move(mesh));
                         volume = model_object->volumes.front();
                         ModelInstance *instance     = model_object->add_instance();
-                        instance->rotation          = instance_rotation;
-                        instance->scaling_factor    = instance_scaling_factor;
-                        instance->offset            = instance_offset;
-                        ++ num_models;
+//##############################################################################################################################################################
+                        instance->rotation = instance_rotation.cast<double>();
+                        instance->scaling_factor = instance_scaling_factor.cast<double>();
+                        instance->offset = instance_offset.cast<double>();
+//                        instance->rotation = instance_rotation;
+//                        instance->scaling_factor = instance_scaling_factor;
+//                        instance->offset = instance_offset;
+//##############################################################################################################################################################
+                        ++num_models;
                         if (group_id != (size_t)-1)
                             group_to_model_object[group_id] = model_object;
                     } else {

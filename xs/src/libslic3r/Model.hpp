@@ -224,32 +224,55 @@ public:
 
     friend class ModelObject;
 
-//    Transform3d     transform;
-    double rotation;            // Rotation around the Z axis, in radians around mesh center point
-    double scaling_factor;
-    Vec2d offset;              // in unscaled coordinates
-    
+//##############################################################################################################################################################
+    Vec3d rotation;            // Rotation around the 3 axes, in radians around mesh center point
+    Vec3d scaling_factor;
+    Vec3d offset;              // in unscaled coordinates
+
+////    Transform3d     transform;
+//    double rotation;            // Rotation around the Z axis, in radians around mesh center point
+//    double scaling_factor;
+//    Vec2d offset;              // in unscaled coordinates
+//##############################################################################################################################################################
+
     // flag showing the position of this instance with respect to the print volume (set by Print::validate() using ModelObject::check_instances_print_volume_state())
     EPrintVolumeState print_volume_state;
 
     ModelObject* get_object() const { return this->object; }
 
     // To be called on an external mesh
-    void transform_mesh(TriangleMesh* mesh, bool dont_translate = false) const;
+//##############################################################################################################################################################
+    void transform_mesh(TriangleMesh& mesh, bool dont_translate = false) const;
+//    void transform_mesh(TriangleMesh* mesh, bool dont_translate = false) const;
+//##############################################################################################################################################################
     // Calculate a bounding box of a transformed mesh. To be called on an external mesh.
-    BoundingBoxf3 transform_mesh_bounding_box(const TriangleMesh* mesh, bool dont_translate = false) const;
+//##############################################################################################################################################################
+    BoundingBoxf3 transform_mesh_bounding_box(const TriangleMesh& mesh, bool dont_translate = false) const;
+//    BoundingBoxf3 transform_mesh_bounding_box(const TriangleMesh* mesh, bool dont_translate = false) const;
+//##############################################################################################################################################################
     // Transform an external bounding box.
     BoundingBoxf3 transform_bounding_box(const BoundingBoxf3 &bbox, bool dont_translate = false) const;
     // To be called on an external polygon. It does not translate the polygon, only rotates and scales.
     void transform_polygon(Polygon* polygon) const;
+//##############################################################################################################################################################
+    // Transform an external vector.
+    Vec3d transform_vector(const Vec3d& v, bool dont_translate = false) const;
+//##############################################################################################################################################################
 
     bool is_printable() const { return print_volume_state == PVS_Inside; }
+
+//##############################################################################################################################################################
+    Transform3d world_matrix(bool dont_translate) const;
+//##############################################################################################################################################################
 
 private:
     // Parent object, owning this instance.
     ModelObject* object;
 
-    ModelInstance(ModelObject *object) : rotation(0), scaling_factor(1), offset(Vec2d::Zero()), object(object), print_volume_state(PVS_Inside) {}
+//##############################################################################################################################################################
+    ModelInstance(ModelObject *object) : rotation(Vec3d::Zero()), scaling_factor(Vec3d::Ones()), offset(Vec3d::Zero()), object(object), print_volume_state(PVS_Inside) {}
+//    ModelInstance(ModelObject *object) : rotation(0), scaling_factor(1), offset(Vec2d::Zero()), object(object), print_volume_state(PVS_Inside) {}
+//##############################################################################################################################################################
     ModelInstance(ModelObject *object, const ModelInstance &other) :
         rotation(other.rotation), scaling_factor(other.scaling_factor), offset(other.offset), object(object), print_volume_state(PVS_Inside) {}
 };

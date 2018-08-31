@@ -1123,7 +1123,9 @@ const float GLCanvas3D::Gizmos::OverlayGapY = 5.0f * OverlayTexturesScale;
 GLCanvas3D::Gizmos::Gizmos()
     : m_enabled(false)
     , m_current(Undefined)
-    , m_dragging(false)
+//##############################################################################################################################################################
+//    , m_dragging(false)
+//##############################################################################################################################################################
 {
 }
 
@@ -1346,12 +1348,22 @@ bool GLCanvas3D::Gizmos::is_running() const
 
 bool GLCanvas3D::Gizmos::is_dragging() const
 {
-    return m_dragging;
+//##############################################################################################################################################################
+    if (!m_enabled)
+        return false;
+
+    GLGizmoBase* curr = _get_current();
+    return (curr != nullptr) ? curr->is_dragging() : false;
+
+//    return m_dragging;
+//##############################################################################################################################################################
 }
 
 void GLCanvas3D::Gizmos::start_dragging()
 {
-    m_dragging = true;
+//##############################################################################################################################################################
+//    m_dragging = true;
+//##############################################################################################################################################################
     GLGizmoBase* curr = _get_current();
     if (curr != nullptr)
         curr->start_dragging();
@@ -1359,49 +1371,211 @@ void GLCanvas3D::Gizmos::start_dragging()
 
 void GLCanvas3D::Gizmos::stop_dragging()
 {
-    m_dragging = false;
+//##############################################################################################################################################################
+//    m_dragging = false;
+//##############################################################################################################################################################
     GLGizmoBase* curr = _get_current();
     if (curr != nullptr)
         curr->stop_dragging();
 }
 
-float GLCanvas3D::Gizmos::get_scale() const
+//##############################################################################################################################################################
+double GLCanvas3D::Gizmos::get_scale_x() const
 {
     if (!m_enabled)
-        return 1.0f;
-
+        return 1.0;
+    
     GizmosMap::const_iterator it = m_gizmos.find(Scale);
-    return (it != m_gizmos.end()) ? reinterpret_cast<GLGizmoScale3D*>(it->second)->get_scale_x() : 1.0f;
+    return (it != m_gizmos.end()) ? reinterpret_cast<GLGizmoScale3D*>(it->second)->get_scale_x() : 1.0;
 }
 
-void GLCanvas3D::Gizmos::set_scale(float scale)
+void GLCanvas3D::Gizmos::set_scale_x(double scale)
+{
+    if (!m_enabled)
+        return;
+    
+    GizmosMap::const_iterator it = m_gizmos.find(Scale);
+    if (it != m_gizmos.end())
+        reinterpret_cast<GLGizmoScale3D*>(it->second)->set_scale_x(scale);
+}
+
+double GLCanvas3D::Gizmos::get_scale_y() const
+{
+    if (!m_enabled)
+        return 1.0;
+
+    GizmosMap::const_iterator it = m_gizmos.find(Scale);
+    return (it != m_gizmos.end()) ? reinterpret_cast<GLGizmoScale3D*>(it->second)->get_scale_y() : 1.0;
+}
+
+void GLCanvas3D::Gizmos::set_scale_y(double scale)
 {
     if (!m_enabled)
         return;
 
     GizmosMap::const_iterator it = m_gizmos.find(Scale);
     if (it != m_gizmos.end())
-        reinterpret_cast<GLGizmoScale3D*>(it->second)->set_scale(scale);
+        reinterpret_cast<GLGizmoScale3D*>(it->second)->set_scale_y(scale);
 }
 
-float GLCanvas3D::Gizmos::get_angle_z() const
+double GLCanvas3D::Gizmos::get_scale_z() const
 {
     if (!m_enabled)
-        return 0.0f;
+        return 1.0;
 
-    GizmosMap::const_iterator it = m_gizmos.find(Rotate);
-    return (it != m_gizmos.end()) ? reinterpret_cast<GLGizmoRotate3D*>(it->second)->get_angle_z() : 0.0f;
+    GizmosMap::const_iterator it = m_gizmos.find(Scale);
+    return (it != m_gizmos.end()) ? reinterpret_cast<GLGizmoScale3D*>(it->second)->get_scale_z() : 1.0;
 }
 
-void GLCanvas3D::Gizmos::set_angle_z(float angle_z)
+void GLCanvas3D::Gizmos::set_scale_z(double scale)
+{
+    if (!m_enabled)
+        return;
+
+    GizmosMap::const_iterator it = m_gizmos.find(Scale);
+    if (it != m_gizmos.end())
+        reinterpret_cast<GLGizmoScale3D*>(it->second)->set_scale_z(scale);
+}
+
+Vec3d GLCanvas3D::Gizmos::get_scale() const
+{
+    if (!m_enabled)
+        return Vec3d::Ones();
+
+    GizmosMap::const_iterator it = m_gizmos.find(Scale);
+    return (it != m_gizmos.end()) ? reinterpret_cast<GLGizmoScale3D*>(it->second)->get_scale() : Vec3d::Ones();
+}
+
+void GLCanvas3D::Gizmos::set_scale(const Vec3d& scale)
+{
+    if (!m_enabled)
+        return;
+
+    GizmosMap::const_iterator it = m_gizmos.find(Scale);
+    if (it != m_gizmos.end())
+    {
+        GizmosMap::const_iterator it = m_gizmos.find(Scale);
+        if (it != m_gizmos.end())
+            reinterpret_cast<GLGizmoScale3D*>(it->second)->set_scale(scale);
+    }
+}
+
+//float GLCanvas3D::Gizmos::get_scale() const
+//{
+//    if (!m_enabled)
+//        return 1.0f;
+//
+//    GizmosMap::const_iterator it = m_gizmos.find(Scale);
+//    return (it != m_gizmos.end()) ? reinterpret_cast<GLGizmoScale3D*>(it->second)->get_scale_x() : 1.0f;
+//}
+//
+//void GLCanvas3D::Gizmos::set_scale(float scale)
+//{
+//    if (!m_enabled)
+//        return;
+//
+//    GizmosMap::const_iterator it = m_gizmos.find(Scale);
+//    if (it != m_gizmos.end())
+//        reinterpret_cast<GLGizmoScale3D*>(it->second)->set_scale(scale);
+//}
+//##############################################################################################################################################################
+
+//##############################################################################################################################################################
+double GLCanvas3D::Gizmos::get_angle_x() const
+{
+    if (!m_enabled)
+        return 0.0;
+
+    GizmosMap::const_iterator it = m_gizmos.find(Rotate);
+    return (it != m_gizmos.end()) ? reinterpret_cast<GLGizmoRotate3D*>(it->second)->get_angle_x() : 0.0;
+}
+
+void GLCanvas3D::Gizmos::set_angle_x(double angle)
+{
+    if (!m_enabled)
+        return;
+    
+    GizmosMap::const_iterator it = m_gizmos.find(Rotate);
+    if (it != m_gizmos.end())
+        reinterpret_cast<GLGizmoRotate3D*>(it->second)->set_angle_x(angle);
+}
+
+double GLCanvas3D::Gizmos::get_angle_y() const
+{
+    if (!m_enabled)
+        return 0.0;
+
+    GizmosMap::const_iterator it = m_gizmos.find(Rotate);
+    return (it != m_gizmos.end()) ? reinterpret_cast<GLGizmoRotate3D*>(it->second)->get_angle_y() : 0.0;
+}
+
+void GLCanvas3D::Gizmos::set_angle_y(double angle)
 {
     if (!m_enabled)
         return;
 
     GizmosMap::const_iterator it = m_gizmos.find(Rotate);
     if (it != m_gizmos.end())
-        reinterpret_cast<GLGizmoRotate3D*>(it->second)->set_angle_z(angle_z);
+        reinterpret_cast<GLGizmoRotate3D*>(it->second)->set_angle_y(angle);
 }
+
+double GLCanvas3D::Gizmos::get_angle_z() const
+{
+    if (!m_enabled)
+        return 0.0;
+
+    GizmosMap::const_iterator it = m_gizmos.find(Rotate);
+    return (it != m_gizmos.end()) ? reinterpret_cast<GLGizmoRotate3D*>(it->second)->get_angle_z() : 0.0;
+}
+
+void GLCanvas3D::Gizmos::set_angle_z(double angle)
+{
+    if (!m_enabled)
+        return;
+
+    GizmosMap::const_iterator it = m_gizmos.find(Rotate);
+    if (it != m_gizmos.end())
+        reinterpret_cast<GLGizmoRotate3D*>(it->second)->set_angle_z(angle);
+}
+
+Vec3d GLCanvas3D::Gizmos::get_angles() const
+{
+    if (!m_enabled)
+        return Vec3d::Zero();
+
+    GizmosMap::const_iterator it = m_gizmos.find(Rotate);
+    return (it != m_gizmos.end()) ? reinterpret_cast<GLGizmoRotate3D*>(it->second)->get_angles() : Vec3d::Zero();
+}
+
+void GLCanvas3D::Gizmos::set_angles(const Vec3d& angles)
+{
+    if (!m_enabled)
+        return;
+
+    GizmosMap::const_iterator it = m_gizmos.find(Rotate);
+    if (it != m_gizmos.end())
+        reinterpret_cast<GLGizmoRotate3D*>(it->second)->set_angles(angles);
+}
+
+//float GLCanvas3D::Gizmos::get_angle_z() const
+//{
+//    if (!m_enabled)
+//        return 0.0f;
+//
+//    GizmosMap::const_iterator it = m_gizmos.find(Rotate);
+//    return (it != m_gizmos.end()) ? reinterpret_cast<GLGizmoRotate3D*>(it->second)->get_angle_z() : 0.0f;
+//}
+//
+//void GLCanvas3D::Gizmos::set_angle_z(float angle_z)
+//{
+//    if (!m_enabled)
+//        return;
+//
+//    GizmosMap::const_iterator it = m_gizmos.find(Rotate);
+//    if (it != m_gizmos.end())
+//        reinterpret_cast<GLGizmoRotate3D*>(it->second)->set_angle_z(angle_z);
+//}
+//##############################################################################################################################################################
 
 Vec3d GLCanvas3D::Gizmos::get_flattening_normal() const
 {
@@ -2324,19 +2498,29 @@ void GLCanvas3D::update_gizmos_data()
         ModelObject* model_object = m_model->objects[id];
         if (model_object != nullptr)
         {
-            ModelInstance* model_instance = model_object->instances[0];
+//##############################################################################################################################################################
+            ModelInstance* model_instance = model_object->instances.front();
+//            ModelInstance* model_instance = model_object->instances[0];
+//##############################################################################################################################################################
             if (model_instance != nullptr)
             {
                 m_gizmos.set_scale(model_instance->scaling_factor);
-                m_gizmos.set_angle_z(model_instance->rotation);
+//##############################################################################################################################################################
+                m_gizmos.set_angles(model_instance->rotation);
+//                m_gizmos.set_angle_z(model_instance->rotation);
+//##############################################################################################################################################################
                 m_gizmos.set_flattening_data(model_object);
             }
         }
     }
     else
     {
-        m_gizmos.set_scale(1.0f);
-        m_gizmos.set_angle_z(0.0f);
+//##############################################################################################################################################################
+        m_gizmos.set_scale(Vec3d::Ones());
+        m_gizmos.set_angles(Vec3d::Zero());
+//        m_gizmos.set_scale(1.0f);
+//        m_gizmos.set_angle_z(0.0f);
+//##############################################################################################################################################################
         m_gizmos.set_flattening_data(nullptr);
     }
 }
@@ -2679,17 +2863,32 @@ void GLCanvas3D::register_on_enable_action_buttons_callback(void* callback)
         m_on_enable_action_buttons_callback.register_callback(callback);
 }
 
-void GLCanvas3D::register_on_gizmo_scale_uniformly_callback(void* callback)
+//##############################################################################################################################################################
+void GLCanvas3D::register_on_gizmo_scale_callback(void* callback)
 {
     if (callback != nullptr)
-        m_on_gizmo_scale_uniformly_callback.register_callback(callback);
+        m_on_gizmo_scale_callback.register_callback(callback);
 }
+//void GLCanvas3D::register_on_gizmo_scale_uniformly_callback(void* callback)
+//{
+//    if (callback != nullptr)
+//        m_on_gizmo_scale_uniformly_callback.register_callback(callback);
+//}
+//##############################################################################################################################################################
 
 void GLCanvas3D::register_on_gizmo_rotate_callback(void* callback)
 {
     if (callback != nullptr)
         m_on_gizmo_rotate_callback.register_callback(callback);
 }
+
+//##############################################################################################################################################################
+void GLCanvas3D::register_on_gizmo_flatten_callback(void* callback)
+{
+    if (callback != nullptr)
+        m_on_gizmo_flatten_callback.register_callback(callback);
+}
+//##############################################################################################################################################################
 
 void GLCanvas3D::register_on_update_geometry_info_callback(void* callback)
 {
@@ -3000,9 +3199,18 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
                 // Rotate the object so the normal points downward:
                 Vec3d normal = m_gizmos.get_flattening_normal();
                 if (normal != Vec3d::Zero()) {
-                    Vec3d axis = normal(2) > 0.999f ? Vec3d::UnitX() : normal.cross(-Vec3d::UnitZ());
-                    float angle = -acos(-normal(2));
-                    m_on_gizmo_rotate_callback.call(angle, (float)axis(0), (float)axis(1), (float)axis(2));
+//##############################################################################################################################################################
+                    Vec3d axis = normal(2) > 0.999 ? Vec3d::UnitX() : normal.cross(-Vec3d::UnitZ()).normalized();
+                    double angle = acos(-normal(2));
+                    Eigen::Matrix3d m3x3;
+                    m3x3 = Eigen::AngleAxisd(angle, axis);
+                    Vec3d angles = m3x3.eulerAngles(0, 1, 2);
+                    m_on_gizmo_flatten_callback.call(angles(0), angles(1), angles(2));
+
+//                    Vec3d axis = normal(2) > 0.999f ? Vec3d::UnitX() : normal.cross(-Vec3d::UnitZ());
+//                    float angle = -acos(-normal(2));
+//                    m_on_gizmo_rotate_callback.call(angle, (float)axis(0), (float)axis(1), (float)axis(2));
+//##############################################################################################################################################################
                 }
             }
 
@@ -3124,9 +3332,17 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
             }
         }
 
-        // Apply new temporary volume origin and ignore Z.
+//##############################################################################################################################################################
+        // Apply new temporary volume origin.
+//        // Apply new temporary volume origin and ignore Z.
+//##############################################################################################################################################################
         for (GLVolume* v : volumes)
-            v->set_origin(v->get_origin() + Vec3d(vector(0), vector(1), 0.0));
+//##############################################################################################################################################################
+        {
+            v->set_origin(v->get_origin() + vector);
+        }
+//            v->set_origin(v->get_origin() + Vec3d(vector(0), vector(1), 0.0));
+//##############################################################################################################################################################
 
         m_mouse.drag.start_position_3D = cur_pos;
         m_gizmos.refresh();
@@ -3163,20 +3379,32 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
         case Gizmos::Scale:
         {
             // Apply new temporary scale factor
-            float scale_factor = m_gizmos.get_scale();
+//##############################################################################################################################################################
+            Vec3f scale_factor = m_gizmos.get_scale().cast<float>();
+//            float scale_factor = m_gizmos.get_scale();
+//##############################################################################################################################################################
             for (GLVolume* v : volumes)
             {
-                v->set_scale_factor(scale_factor);
+//##############################################################################################################################################################
+                v->set_scale(scale_factor);
+//                v->set_scale_factor(scale_factor);
+//##############################################################################################################################################################
             }
             break;
         }
         case Gizmos::Rotate:
         {
-            // Apply new temporary angle_z
-            float angle_z = m_gizmos.get_angle_z();
+//##############################################################################################################################################################
+            Vec3f angles_f = m_gizmos.get_angles().cast<float>();
+//            // Apply new temporary angle_z
+//            float angle_z = m_gizmos.get_angle_z();
+//##############################################################################################################################################################
             for (GLVolume* v : volumes)
             {
-                v->set_angle_z(angle_z);
+//##############################################################################################################################################################
+                v->set_angles(angles_f);
+//                v->set_angle_z(angle_z);
+//##############################################################################################################################################################
             }
             break;
         }
@@ -3192,9 +3420,19 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
                 bb.merge(volume->transformed_bounding_box());
             }
             const Vec3d& size = bb.size();
-            m_on_update_geometry_info_callback.call(size(0), size(1), size(2), m_gizmos.get_scale());
-            update_scale_values(size, m_gizmos.get_scale());
-            update_rotation_value(volumes[0]->get_angle_z(), "z");
+//##############################################################################################################################################################
+            const Vec3d& scale = m_gizmos.get_scale();
+            m_on_update_geometry_info_callback.call(size(0), size(1), size(2), scale(0), scale(1), scale(2));
+
+            update_position_values();
+            update_scale_values();
+            update_rotation_values();
+
+
+//            m_on_update_geometry_info_callback.call(size(0), size(1), size(2), m_gizmos.get_scale());
+//            update_scale_values(size, m_gizmos.get_scale());
+//            update_rotation_value(volumes[0]->get_angle_z(), "z");
+//##############################################################################################################################################################
         }
 
         if ((m_gizmos.get_current_type() != Gizmos::Rotate) && (volumes.size() > 1))
@@ -3294,13 +3532,21 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
             {
             case Gizmos::Scale:
             {
-                m_on_gizmo_scale_uniformly_callback.call((double)m_gizmos.get_scale());
+//##############################################################################################################################################################
+                Vec3d scale = m_gizmos.get_scale();
+                m_on_gizmo_scale_callback.call(scale(0), scale(1), scale(2));
+//                m_on_gizmo_scale_uniformly_callback.call((double)m_gizmos.get_scale());
+//##############################################################################################################################################################
                 Slic3r::GUI::update_settings_value();
                 break;
             }
             case Gizmos::Rotate:
             {
-                m_on_gizmo_rotate_callback.call((double)m_gizmos.get_angle_z());
+//##############################################################################################################################################################
+                Vec3d angles = m_gizmos.get_angles();
+                m_on_gizmo_rotate_callback.call(angles(0), angles(1), angles(2));
+//                m_on_gizmo_rotate_callback.call((double)m_gizmos.get_angle_z());
+//##############################################################################################################################################################
                 break;
             }
             default:
@@ -3734,8 +3980,14 @@ void GLCanvas3D::_deregister_callbacks()
     m_on_instance_moved_callback.deregister_callback();
     m_on_wipe_tower_moved_callback.deregister_callback();
     m_on_enable_action_buttons_callback.deregister_callback();
-    m_on_gizmo_scale_uniformly_callback.deregister_callback();
+//##############################################################################################################################################################
+    m_on_gizmo_scale_callback.deregister_callback();
+//    m_on_gizmo_scale_uniformly_callback.deregister_callback();
+//##############################################################################################################################################################
     m_on_gizmo_rotate_callback.deregister_callback();
+//##############################################################################################################################################################
+    m_on_gizmo_flatten_callback.deregister_callback();
+//##############################################################################################################################################################
     m_on_update_geometry_info_callback.deregister_callback();
 
     m_action_add_callback.deregister_callback();
@@ -5219,7 +5471,10 @@ void GLCanvas3D::_on_move(const std::vector<int>& volume_idxs)
 
     std::set<std::string> done;  // prevent moving instances twice
     bool object_moved = false;
-    Vec3d wipe_tower_origin(0.0, 0.0, 0.0);
+//##############################################################################################################################################################
+    Vec3d wipe_tower_origin = Vec3d::Zero();
+//    Vec3d wipe_tower_origin(0.0, 0.0, 0.0)
+//##############################################################################################################################################################
     for (int volume_idx : volume_idxs)
     {
         GLVolume* volume = m_volumes.volumes[volume_idx];
@@ -5238,20 +5493,29 @@ void GLCanvas3D::_on_move(const std::vector<int>& volume_idxs)
         {
             // Move a regular object.
             ModelObject* model_object = m_model->objects[obj_idx];
-            const Vec3d& origin = volume->get_origin();
-            model_object->instances[instance_idx]->offset = Vec2d(origin(0), origin(1));
+//##############################################################################################################################################################
+            model_object->instances[instance_idx]->offset = volume->get_origin();
+//            const Vec3d& origin = volume->get_origin();
+//            model_object->instances[instance_idx]->offset = Vec2d(origin(0), origin(1));
+//##############################################################################################################################################################
             model_object->invalidate_bounding_box();
             object_moved = true;
         }
         else if (obj_idx == 1000)
             // Move a wipe tower proxy.
-            wipe_tower_origin = volume->get_origin();
+//##############################################################################################################################################################
+            wipe_tower_origin = volume->get_origin().cast<double>();
+//            wipe_tower_origin = volume->get_origin();
+//##############################################################################################################################################################
     }
 
     if (object_moved)
         m_on_instance_moved_callback.call();
 
-    if (wipe_tower_origin != Vec3d(0.0, 0.0, 0.0))
+//##############################################################################################################################################################
+    if (wipe_tower_origin != Vec3d::Zero())
+//    if (wipe_tower_origin != Vec3d(0.0, 0.0, 0.0))
+//##############################################################################################################################################################
         m_on_wipe_tower_moved_callback.call(wipe_tower_origin(0), wipe_tower_origin(1));
 }
 

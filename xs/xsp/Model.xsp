@@ -349,25 +349,55 @@ ModelMaterial::attributes()
     ModelMaterial* assign_unique_material();
 };
 
-
+//###################################################################################################################################################
 %name{Slic3r::Model::Instance} class ModelInstance {
     Ref<ModelObject> object()
         %code%{ RETVAL = THIS->get_object(); %};
 
-    double rotation()
-        %code%{ RETVAL = THIS->rotation; %};
-    double scaling_factor()
-        %code%{ RETVAL = THIS->scaling_factor; %};
-    Ref<Vec2d> offset()
+    Ref<Vec3d> rotation()
+        %code%{ RETVAL = &THIS->rotation; %};
+    Ref<Vec3d> scaling_factor()
+        %code%{ RETVAL = &THIS->scaling_factor; %};
+    Ref<Vec3d> offset()
         %code%{ RETVAL = &THIS->offset; %};
 
     void set_rotation(double val)
-        %code%{ THIS->rotation = val; THIS->get_object()->invalidate_bounding_box(); %};
-    void set_scaling_factor(double val)
-        %code%{ THIS->scaling_factor = val; THIS->get_object()->invalidate_bounding_box(); %};
-    void set_offset(Vec2d *offset)
+        %code%{ THIS->rotation(2) = val; THIS->get_object()->invalidate_bounding_box(); %};
+    void set_rotations(Vec3d *rotations)
+        %code%{ THIS->rotation = *rotations; THIS->get_object()->invalidate_bounding_box(); %};
+    void set_scaling_factor(double x, double y, double z)
+        %code%{
+                THIS->scaling_factor(0) = x; 
+                THIS->scaling_factor(1) = y; 
+                THIS->scaling_factor(2) = z; 
+                THIS->get_object()->invalidate_bounding_box();
+             %};
+    void set_scaling_factors(Vec3d *scale)
+        %code%{ THIS->scaling_factor = *scale; THIS->get_object()->invalidate_bounding_box(); %};
+    void set_offset(Vec3d *offset)
         %code%{ THIS->offset = *offset; %};
     
-    void transform_mesh(TriangleMesh* mesh, bool dont_translate = false) const;
     void transform_polygon(Polygon* polygon) const;
 };
+//%name{Slic3r::Model::Instance} class ModelInstance {
+//    Ref<ModelObject> object()
+//        %code%{ RETVAL = THIS->get_object(); %};
+//
+//    double rotation()
+//        %code%{ RETVAL = THIS->rotation; %};
+//    double scaling_factor()
+//        %code%{ RETVAL = THIS->scaling_factor; %};
+//    Ref<Vec2d> offset()
+//        %code%{ RETVAL = &THIS->offset; %};
+//
+//    void set_rotation(double val)
+//        %code%{ THIS->rotation = val; THIS->get_object()->invalidate_bounding_box(); %};
+//    void set_scaling_factor(double val)
+//        %code%{ THIS->scaling_factor = val; THIS->get_object()->invalidate_bounding_box(); %};
+//    void set_offset(Vec2d *offset)
+//        %code%{ THIS->offset = *offset; %};
+//   
+//    void transform_mesh(TriangleMesh* mesh, bool dont_translate = false) const;
+//    void transform_polygon(Polygon* polygon) const;
+//};
+//###################################################################################################################################################

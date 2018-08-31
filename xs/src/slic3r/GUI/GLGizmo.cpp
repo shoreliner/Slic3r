@@ -131,6 +131,9 @@ GLGizmoBase::GLGizmoBase(GLCanvas3D& parent)
     , m_group_id(-1)
     , m_state(Off)
     , m_hover_id(-1)
+//##############################################################################################################################################################
+    , m_dragging(false)
+//##############################################################################################################################################################
 {
     ::memcpy((void*)m_base_color, (const void*)DEFAULT_BASE_COLOR, 3 * sizeof(float));
     ::memcpy((void*)m_drag_color, (const void*)DEFAULT_DRAG_COLOR, 3 * sizeof(float));
@@ -154,6 +157,10 @@ void GLGizmoBase::set_highlight_color(const float* color)
 
 void GLGizmoBase::start_dragging()
 {
+//##############################################################################################################################################################
+    m_dragging = true;
+//##############################################################################################################################################################
+
     for (int i = 0; i < (int)m_grabbers.size(); ++i)
     {
         m_grabbers[i].dragging = (m_hover_id == i);
@@ -164,6 +171,10 @@ void GLGizmoBase::start_dragging()
 
 void GLGizmoBase::stop_dragging()
 {
+//##############################################################################################################################################################
+    m_dragging = false;
+//##############################################################################################################################################################
+
     set_tooltip("");
 
     for (int i = 0; i < (int)m_grabbers.size(); ++i)
@@ -877,8 +888,11 @@ void GLGizmoScale3D::do_scale_y(const Linef3& mouse_ray)
     double ratio = calc_ratio(2, mouse_ray, m_starting_box.center());
 
     if (ratio > 0.0)
-        m_scale(0) = m_starting_scale(1) * ratio; // << this is temporary
-//        m_scale(1) = m_starting_scale(1) * ratio;
+//##############################################################################################################################################################
+m_scale(1) = m_starting_scale(1) * ratio;
+//        m_scale(0) = m_starting_scale(1) * ratio; // << this is temporary
+////        m_scale(1) = m_starting_scale(1) * ratio;
+//##############################################################################################################################################################
 }
 
 void GLGizmoScale3D::do_scale_z(const Linef3& mouse_ray)
@@ -886,8 +900,11 @@ void GLGizmoScale3D::do_scale_z(const Linef3& mouse_ray)
     double ratio = calc_ratio(1, mouse_ray, m_starting_box.center());
 
     if (ratio > 0.0)
-        m_scale(0) = m_starting_scale(2) * ratio; // << this is temporary
-//        m_scale(2) = m_starting_scale(2) * ratio;
+//##############################################################################################################################################################
+        m_scale(2) = m_starting_scale(2) * ratio;
+//        m_scale(0) = m_starting_scale(2) * ratio; // << this is temporary
+////        m_scale(2) = m_starting_scale(2) * ratio;
+//##############################################################################################################################################################
 }
 
 void GLGizmoScale3D::do_scale_uniform(const Linef3& mouse_ray)
@@ -992,7 +1009,11 @@ double GLGizmoScale3D::calc_ratio(unsigned int preferred_plane_id, const Linef3&
 
 GLGizmoFlatten::GLGizmoFlatten(GLCanvas3D& parent)
     : GLGizmoBase(parent)
-    , m_normal(0.0, 0.0, 0.0)
+//##############################################################################################################################################################
+    , m_normal(Vec3d::Zero())
+    , m_center(Vec3d::Zero())
+//    , m_normal(0.0, 0.0, 0.0)
+//##############################################################################################################################################################
 {
 }
 
@@ -1019,33 +1040,58 @@ void GLGizmoFlatten::on_start_dragging()
 {
     if (m_hover_id != -1)
         m_normal = m_planes[m_hover_id].normal;
+
+//##############################################################################################################################################################
+    m_center = m_model_object->instances.front()->offset;
+//##############################################################################################################################################################
 }
 
 void GLGizmoFlatten::on_render(const BoundingBoxf3& box) const
 {
-    // the dragged_offset is a vector measuring where was the object moved
-    // with the gizmo being on. This is reset in set_flattening_data and
-    // does not work correctly when there are multiple copies.
-    if (!m_center) // this is the first bounding box that we see
-        m_center.reset(new Vec3d(box.center()));
+//##############################################################################################################################################################
+    Vec3d dragged_offset = is_dragging() ? m_model_object->instances.front()->offset - m_center : Vec3d(0.0, 0.0, 0.0);
 
-    Vec3d dragged_offset = box.center() - *m_center;
+//    // the dragged_offset is a vector measuring where was the object moved
+//    // with the gizmo being on. This is reset in set_flattening_data and
+//    // does not work correctly when there are multiple copies.
+//    if (!m_center) // this is the first bounding box that we see
+//        m_center.reset(new Vec3d(box.center()));
+//
+//    Vec3d dragged_offset = box.center() - *m_center;
+//##############################################################################################################################################################
 
-    bool blending_was_enabled = ::glIsEnabled(GL_BLEND);
-    bool depth_test_was_enabled = ::glIsEnabled(GL_DEPTH_TEST);
-    ::glEnable(GL_BLEND);
+//##############################################################################################################################################################
     ::glEnable(GL_DEPTH_TEST);
+//    bool blending_was_enabled = ::glIsEnabled(GL_BLEND);
+//    bool depth_test_was_enabled = ::glIsEnabled(GL_DEPTH_TEST);
+//    ::glEnable(GL_BLEND);
+//    ::glEnable(GL_DEPTH_TEST);
+//##############################################################################################################################################################
 
     for (int i=0; i<(int)m_planes.size(); ++i) {
         if (i == m_hover_id)
-            ::glColor4f(0.9f, 0.9f, 0.9f, 0.75f);
+//##############################################################################################################################################################
+            ::glColor3f(m_highlight_color[0], m_highlight_color[1], m_highlight_color[2]);
+//            ::glColor4f(0.9f, 0.9f, 0.9f, 0.75f);
+//##############################################################################################################################################################
         else
-            ::glColor4f(0.9f, 0.9f, 0.9f, 0.5f);
+//##############################################################################################################################################################
+            ::glColor3f(m_base_color[0], m_base_color[1], m_base_color[2]);
+//            ::glColor4f(0.9f, 0.9f, 0.9f, 0.5f);
+//##############################################################################################################################################################
 
-        for (Vec2d offset : m_instances_positions) {
-            offset += to_2d(dragged_offset);
+//##############################################################################################################################################################
+//        for (const Vec3d& offset : m_instances_positions) {
+        for (Vec3d offset : m_instances_positions) {
+            offset += dragged_offset;
+//        for (Vec2d offset : m_instances_positions) {
+//            offset += to_2d(dragged_offset);
+//##############################################################################################################################################################
             ::glPushMatrix();
-            ::glTranslatef((GLfloat)offset(0), (GLfloat)offset(1), 0.0f);
+//##############################################################################################################################################################
+            ::glTranslatef((GLfloat)offset(0), (GLfloat)offset(1), (GLfloat)offset(2));
+//            ::glTranslatef((GLfloat)offset(0), (GLfloat)offset(1), 0.0f);
+//##############################################################################################################################################################
             ::glBegin(GL_POLYGON);
             for (const Vec3d& vertex : m_planes[i].vertices)
                 ::glVertex3f((GLfloat)vertex(0), (GLfloat)vertex(1), (GLfloat)vertex(2));
@@ -1054,24 +1100,33 @@ void GLGizmoFlatten::on_render(const BoundingBoxf3& box) const
         }
     }
 
-    if (!blending_was_enabled)
-        ::glDisable(GL_BLEND);
-    if (!depth_test_was_enabled)
-        ::glDisable(GL_DEPTH_TEST);
+//##############################################################################################################################################################
+//    if (!blending_was_enabled)
+//        ::glDisable(GL_BLEND);
+//    if (!depth_test_was_enabled)
+//        ::glDisable(GL_DEPTH_TEST);
+//##############################################################################################################################################################
 }
 
 void GLGizmoFlatten::on_render_for_picking(const BoundingBoxf3& box) const
 {
-    ::glDisable(GL_DEPTH_TEST);
+//##############################################################################################################################################################
+    ::glEnable(GL_DEPTH_TEST);
+//    ::glDisable(GL_DEPTH_TEST);
+//##############################################################################################################################################################
 
     for (unsigned int i = 0; i < m_planes.size(); ++i)
     {
-        // FIXME: the color assignement will fail if the planes count is greater than 254
-        //        use the other color components in that case !!
         ::glColor3f(1.0f, 1.0f, picking_color_component(i));
-        for (const Vec2d& offset : m_instances_positions) {
+//##############################################################################################################################################################
+        for (const Vec3d& offset : m_instances_positions) {
+//        for (const Vec2d& offset : m_instances_positions) {
+//##############################################################################################################################################################
             ::glPushMatrix();
-            ::glTranslatef((GLfloat)offset(0), (GLfloat)offset(1), 0.0f);
+//##############################################################################################################################################################
+            ::glTranslatef((GLfloat)offset(0), (GLfloat)offset(1), (GLfloat)offset(2));
+//            ::glTranslatef((GLfloat)offset(0), (GLfloat)offset(1), 0.0f);
+//##############################################################################################################################################################
             ::glBegin(GL_POLYGON);
             for (const Vec3d& vertex : m_planes[i].vertices)
                 ::glVertex3f((GLfloat)vertex(0), (GLfloat)vertex(1), (GLfloat)vertex(2));
@@ -1083,7 +1138,9 @@ void GLGizmoFlatten::on_render_for_picking(const BoundingBoxf3& box) const
 
 void GLGizmoFlatten::set_flattening_data(const ModelObject* model_object)
 {
-    m_center.release(); // object is not being dragged (this would not be called otherwise) - we must forget about the bounding box position...
+//##############################################################################################################################################################
+//    m_center.release(); // object is not being dragged (this would not be called otherwise) - we must forget about the bounding box position...
+//##############################################################################################################################################################
     m_model_object = model_object;
 
     // ...and save the updated positions of the object instances:
@@ -1103,8 +1160,10 @@ void GLGizmoFlatten::update_planes()
     for (const ModelVolume* vol : m_model_object->volumes)
         ch.merge(vol->get_convex_hull());
     ch = ch.convex_hull_3d();
-    ch.scale(m_model_object->instances.front()->scaling_factor);
-    ch.rotate_z(m_model_object->instances.front()->rotation);
+//##############################################################################################################################################################
+//    ch.scale(m_model_object->instances.front()->scaling_factor);
+//    ch.rotate_z(m_model_object->instances.front()->rotation);
+//##############################################################################################################################################################
 
     m_planes.clear();
 
@@ -1131,10 +1190,16 @@ void GLGizmoFlatten::update_planes()
         while (facet_queue_cnt > 0) {
             int facet_idx = facet_queue[-- facet_queue_cnt];
             const stl_normal& this_normal = ch.stl.facet_start[facet_idx].normal;
-            if (std::abs(this_normal(0) - (*normal_ptr)(0)) < 0.001 && std::abs(this_normal(1) - (*normal_ptr)(1)) < 0.001 && std::abs(this_normal(2) - (*normal_ptr)(2)) < 0.001) {
+//##################################################################################################################################################################
+            if (std::abs(this_normal(0) - (*normal_ptr)(0)) < 0.001f && std::abs(this_normal(1) - (*normal_ptr)(1)) < 0.001f && std::abs(this_normal(2) - (*normal_ptr)(2)) < 0.001f) {
+//            if (std::abs(this_normal(0) - (*normal_ptr)(0)) < 0.001 && std::abs(this_normal(1) - (*normal_ptr)(1)) < 0.001 && std::abs(this_normal(2) - (*normal_ptr)(2)) < 0.001) {
+//##################################################################################################################################################################
                 stl_vertex* first_vertex = ch.stl.facet_start[facet_idx].vertex;
                 for (int j=0; j<3; ++j)
-                    m_planes.back().vertices.emplace_back(first_vertex[j](0), first_vertex[j](1), first_vertex[j](2));
+//##################################################################################################################################################################
+                    m_planes.back().vertices.emplace_back((double)first_vertex[j](0), (double)first_vertex[j](1), (double)first_vertex[j](2));
+//                    m_planes.back().vertices.emplace_back(first_vertex[j](0), first_vertex[j](1), first_vertex[j](2));
+//##################################################################################################################################################################
 
                 facet_visited[facet_idx] = true;
                 for (int j = 0; j < 3; ++ j) {
@@ -1144,14 +1209,27 @@ void GLGizmoFlatten::update_planes()
                 }
             }
         }
-        m_planes.back().normal = Vec3d((double)(*normal_ptr)(0), (double)(*normal_ptr)(1), (double)(*normal_ptr)(2));
+//##################################################################################################################################################################
+        m_planes.back().normal = (*normal_ptr).cast<double>();
+//        m_planes.back().normal = Vec3d((double)(*normal_ptr)(0), (double)(*normal_ptr)(1), (double)(*normal_ptr)(2));
+//##################################################################################################################################################################
 
         // if this is a just a very small triangle, remove it to speed up further calculations (it would be rejected anyway):
         if (m_planes.back().vertices.size() == 3 &&
-               (m_planes.back().vertices[0] - m_planes.back().vertices[1]).norm() < 1.f
-            || (m_planes.back().vertices[0] - m_planes.back().vertices[2]).norm() < 1.f)
+//##################################################################################################################################################################
+            (m_planes.back().vertices[0] - m_planes.back().vertices[1]).norm() < 1.0
+            || (m_planes.back().vertices[0] - m_planes.back().vertices[2]).norm() < 1.0
+            || (m_planes.back().vertices[1] - m_planes.back().vertices[2]).norm() < 1.0)
             m_planes.pop_back();
+//            (m_planes.back().vertices[0] - m_planes.back().vertices[1]).norm() < 1.f
+//            || (m_planes.back().vertices[0] - m_planes.back().vertices[2]).norm() < 1.f)
+//            m_planes.pop_back();
+//##################################################################################################################################################################
     }
+
+//##############################################################################################################################################################
+    const Transform3d& world_transform = m_model_object->instances.front()->world_matrix(true);
+//##############################################################################################################################################################
 
     // Now we'll go through all the polygons, transform the points into xy plane to process them:
     for (unsigned int polygon_id=0; polygon_id < m_planes.size(); ++polygon_id) {
@@ -1159,15 +1237,23 @@ void GLGizmoFlatten::update_planes()
         const Vec3d& normal = m_planes[polygon_id].normal;
 
         // We are going to rotate about z and y to flatten the plane
-        float angle_z = 0.f;
-        float angle_y = 0.f;
+//##################################################################################################################################################################
+        double angle_z = 0.0;
+        double angle_y = 0.0;
+//        float angle_z = 0.f;
+//        float angle_y = 0.f;
+//##################################################################################################################################################################
         if (std::abs(normal(1)) > 0.001)
             angle_z = -atan2(normal(1), normal(0)); // angle to rotate so that normal ends up in xz-plane
+
         if (std::abs(normal(0)*cos(angle_z) - normal(1)*sin(angle_z)) > 0.001)
             angle_y = -atan2(normal(0)*cos(angle_z) - normal(1)*sin(angle_z), normal(2)); // angle to rotate to make normal point upwards
         else {
             // In case it already was in z-direction, we must ensure it is not the wrong way:
-            angle_y = normal(2) > 0.f ? 0.f : -PI;
+//##################################################################################################################################################################
+            angle_y = normal(2) > 0.0 ? 0.0 : (double)PI;
+//            angle_y = normal(2) > 0.f ? 0.f : -PI;
+//##################################################################################################################################################################
         }
 
         // Rotate all points to the xy plane:
@@ -1180,14 +1266,22 @@ void GLGizmoFlatten::update_planes()
 
         // We will calculate area of the polygon and discard ones that are too small
         // The limit is more forgiving in case the normal is in the direction of the coordinate axes
-        const float minimal_area = (std::abs(normal(0)) > 0.999f || std::abs(normal(1)) > 0.999f || std::abs(normal(2)) > 0.999f) ? 1.f : 20.f;
-        float& area = m_planes[polygon_id].area;
-        area = 0.f;
+//##############################################################################################################################################################################
+        const double minimal_area = (std::abs(normal(0)) > 0.999 || std::abs(normal(1)) > 0.999 || std::abs(normal(2)) > 0.999) ? 1.0 : 20.0;
+        double& area = m_planes[polygon_id].area;
+        area = 0.0;
+//        const float minimal_area = (std::abs(normal(0)) > 0.999f || std::abs(normal(1)) > 0.999f || std::abs(normal(2)) > 0.999f) ? 1.f : 20.f;
+//        float& area = m_planes[polygon_id].area;
+//        area = 0.f;
+//##############################################################################################################################################################################
         for (unsigned int i = 0; i < polygon.size(); i++) // Shoelace formula
             area += polygon[i](0)*polygon[i + 1 < polygon.size() ? i + 1 : 0](1) - polygon[i + 1 < polygon.size() ? i + 1 : 0](0)*polygon[i](1);
-        area = std::abs(area / 2.f);
+//##############################################################################################################################################################################
+        area = 0.5 * std::abs(area);
+//        area = std::abs(area / 2.f);
+//##############################################################################################################################################################################
         if (area < minimal_area) {
-            m_planes.erase(m_planes.begin()+(polygon_id--));
+            m_planes.erase(m_planes.begin() + (polygon_id--));
             continue;
         }
 
@@ -1195,7 +1289,10 @@ void GLGizmoFlatten::update_planes()
         Vec3d centroid = std::accumulate(polygon.begin(), polygon.end(), Vec3d(0.0, 0.0, 0.0));
         centroid /= (double)polygon.size();
         for (auto& vertex : polygon)
-            vertex = 0.9f*vertex + 0.1f*centroid;
+//##############################################################################################################################################################################
+            vertex = 0.9 * vertex + 0.1 * centroid;
+//            vertex = 0.9f*vertex + 0.1f*centroid;
+//##############################################################################################################################################################################
 
         // Polygon is now simple and convex, we'll round the corners to make them look nicer.
         // The algorithm takes a vertex, calculates middles of respective sides and moves the vertex
@@ -1203,7 +1300,10 @@ void GLGizmoFlatten::update_planes()
         // In next iterations, the neighbours are not always taken at the middle (to increase the
         // rounding effect at the corners, where we need it most).
         const unsigned int k = 10; // number of iterations
-        const float aggressivity = 0.2f;  // agressivity
+//##############################################################################################################################################################################
+        const double aggressivity = 0.2;  // agressivity
+//        const float aggressivity = 0.2f;  // agressivity
+//##############################################################################################################################################################################
         const unsigned int N = polygon.size();
         std::vector<std::pair<unsigned int, unsigned int>> neighbours;
         if (k != 0) {
@@ -1217,16 +1317,25 @@ void GLGizmoFlatten::update_planes()
                 // Calculate middle of each edge so that neighbours points to something useful:
                 for (unsigned int j=0; j<N; ++j)
                     if (i==0)
-                        points_out[j*2*k+k] = 0.5f * (points_out[j*2*k] + points_out[j==N-1 ? 0 : (j+1)*2*k]);
+//##############################################################################################################################################################################
+                        points_out[j * 2 * k + k] = 0.5 * (points_out[j * 2 * k] + points_out[j == N - 1 ? 0 : (j + 1) * 2 * k]);
+//                        points_out[j * 2 * k + k] = 0.5f * (points_out[j * 2 * k] + points_out[j == N - 1 ? 0 : (j + 1) * 2 * k]);
+//##############################################################################################################################################################################
                     else {
-                        float r = 0.2+0.3/(k-1)*i; // the neighbours are not always taken in the middle
-                        points_out[neighbours[j].first] = r*points_out[j*2*k] + (1-r) * points_out[neighbours[j].first-1];
+//##############################################################################################################################################################################
+                        double r = 0.2 + 0.3 / (k - 1)*i; // the neighbours are not always taken in the middle
+//                        float r = 0.2 + 0.3 / (k - 1)*i; // the neighbours are not always taken in the middle
+//##############################################################################################################################################################################
+                        points_out[neighbours[j].first] = r*points_out[j * 2 * k] + (1 - r) * points_out[neighbours[j].first - 1];
                         points_out[neighbours[j].second] = r*points_out[j*2*k] + (1-r) * points_out[neighbours[j].second+1];
                     }
                 // Now we have a triangle and valid neighbours, we can do an iteration:
                 for (unsigned int j=0; j<N; ++j)
                     points_out[2*k*j] = (1-aggressivity) * points_out[2*k*j] +
-                                        aggressivity*0.5f*(points_out[neighbours[j].first] + points_out[neighbours[j].second]);
+//##############################################################################################################################################################################
+                    aggressivity*0.5*(points_out[neighbours[j].first] + points_out[neighbours[j].second]);
+//                    aggressivity*0.5f*(points_out[neighbours[j].first] + points_out[neighbours[j].second]);
+//##############################################################################################################################################################################
 
                 for (auto& n : neighbours) {
                     ++n.first;
@@ -1238,16 +1347,29 @@ void GLGizmoFlatten::update_planes()
 
         // Transform back to 3D;
         for (auto& b : polygon) {
-            b(2) += 0.1f; // raise a bit above the object surface to avoid flickering
+//##############################################################################################################################################################
+            b(2) += 0.1; // raise a bit above the object surface to avoid flickering
+//            b(2) += 0.1f; // raise a bit above the object surface to avoid flickering
+//##############################################################################################################################################################
         }
 
-        m = m.inverse();
+//##############################################################################################################################################################
+        m = world_transform * m.inverse();
+//        m = m.inverse();
+//##############################################################################################################################################################
+
         polygon = transform(polygon, m);
     }
 
-    // We'll sort the planes by area and only keep the 255 largest ones (because of the picking pass limitations):
+//##############################################################################################################################################################
+    // We'll sort the planes by area and only keep the 254 largest ones (because of the picking pass limitations):
+//    // We'll sort the planes by area and only keep the 255 largest ones (because of the picking pass limitations):
+//##############################################################################################################################################################
     std::sort(m_planes.rbegin(), m_planes.rend(), [](const PlaneData& a, const PlaneData& b) { return a.area < b.area; });
-    m_planes.resize(std::min((int)m_planes.size(), 255));
+//##############################################################################################################################################################
+    m_planes.resize(std::min((int)m_planes.size(), 254));
+//    m_planes.resize(std::min((int)m_planes.size(), 255));
+//##############################################################################################################################################################
 
     // Planes are finished - let's save what we calculated it from:
     m_source_data.bounding_boxes.clear();
@@ -1286,7 +1408,10 @@ bool GLGizmoFlatten::is_plane_update_necessary() const
 
 Vec3d GLGizmoFlatten::get_flattening_normal() const {
     Transform3d m = Transform3d::Identity();
-    m.rotate(Eigen::AngleAxisd(-m_model_object->instances.front()->rotation, Vec3d::UnitZ()));
+//##############################################################################################################################################################
+    m.rotate(Eigen::AngleAxisd(-m_model_object->instances.front()->rotation(2), Vec3d::UnitZ()));
+//    m.rotate(Eigen::AngleAxisd(-m_model_object->instances.front()->rotation, Vec3d::UnitZ()));
+//##############################################################################################################################################################
     Vec3d normal = m * m_normal;
     m_normal = Vec3d::Zero();
     return normal;

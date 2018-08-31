@@ -44,10 +44,16 @@ public:
     void rotate_x(float angle) { this->rotate(angle, X); }
     void rotate_y(float angle) { this->rotate(angle, Y); }
     void rotate_z(float angle) { this->rotate(angle, Z); }
+//##############################################################################################################################################################
+    void rotate(const Vec3d &angles);
+//##############################################################################################################################################################
     void mirror(const Axis &axis);
     void mirror_x() { this->mirror(X); }
     void mirror_y() { this->mirror(Y); }
     void mirror_z() { this->mirror(Z); }
+//##############################################################################################################################################################
+    void transform(const Transform3f& t);
+//##############################################################################################################################################################
     void align_to_origin();
     void rotate(double angle, Point* center);
     TriangleMeshPtrs split() const;

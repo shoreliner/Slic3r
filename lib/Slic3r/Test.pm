@@ -157,9 +157,14 @@ sub model {
     $model->set_material($model_name);
     $object->add_volume(mesh => $mesh, material_id => $model_name);
     $object->add_instance(
-        offset          => Slic3r::Pointf->new(0,0),
-        rotation        => $params{rotation} // 0,
-        scaling_factor  => $params{scale} // 1,
+#=====================================================================================================================================        
+        offset          => Slic3r::Pointf3->new(0,0,0),
+        rotation        => Slic3r::Pointf3->new(0,0, $params{rotation} // 0),
+        scaling_factor  => Slic3r::Pointf3->new($params{scale} // 1, $params{scale} // 1, $params{scale} // 1),
+#        offset          => Slic3r::Pointf->new(0,0),
+#        rotation        => $params{rotation} // 0,
+#        scaling_factor  => $params{scale} // 1,
+#=====================================================================================================================================        
     );
     return $model;
 }

@@ -347,7 +347,9 @@ public:
         typedef std::map<EType, GLGizmoBase*> GizmosMap;
         GizmosMap m_gizmos;
         EType m_current;
-        bool m_dragging;
+//##############################################################################################################################################################
+//        bool m_dragging;
+//##############################################################################################################################################################
 
     public:
         Gizmos();
@@ -377,11 +379,39 @@ public:
         void start_dragging();
         void stop_dragging();
 
-        float get_scale() const;
-        void set_scale(float scale);
+//##############################################################################################################################################################
+        double get_scale_x() const;
+        void set_scale_x(double scale);
 
-        float get_angle_z() const;
-        void set_angle_z(float angle_z);
+        double get_scale_y() const;
+        void set_scale_y(double scale);
+
+        double get_scale_z() const;
+        void set_scale_z(double scale);
+
+        Vec3d get_scale() const;
+        void set_scale(const Vec3d& scale);
+
+//        float get_scale() const;
+//        void set_scale(float scale);
+//##############################################################################################################################################################
+
+//##############################################################################################################################################################
+        double get_angle_x() const;
+        void set_angle_x(double angle);
+
+        double get_angle_y() const;
+        void set_angle_y(double angle);
+
+        double get_angle_z() const;
+        void set_angle_z(double angle);
+
+        Vec3d get_angles() const;
+        void set_angles(const Vec3d& angles);
+
+//        float get_angle_z() const;
+//        void set_angle_z(float angle_z);
+//##############################################################################################################################################################
 
         void set_flattening_data(const ModelObject* model_object);
         Vec3d get_flattening_normal() const;
@@ -500,8 +530,14 @@ private:
     PerlCallback m_on_instance_moved_callback;
     PerlCallback m_on_wipe_tower_moved_callback;
     PerlCallback m_on_enable_action_buttons_callback;
-    PerlCallback m_on_gizmo_scale_uniformly_callback;
+//##############################################################################################################################################################
+    PerlCallback m_on_gizmo_scale_callback;
+//    PerlCallback m_on_gizmo_scale_uniformly_callback;
+//##############################################################################################################################################################
     PerlCallback m_on_gizmo_rotate_callback;
+//##############################################################################################################################################################
+    PerlCallback m_on_gizmo_flatten_callback;
+//##############################################################################################################################################################
     PerlCallback m_on_update_geometry_info_callback;
 
     PerlCallback m_action_add_callback;
@@ -617,8 +653,14 @@ public:
     void register_on_instance_moved_callback(void* callback);
     void register_on_wipe_tower_moved_callback(void* callback);
     void register_on_enable_action_buttons_callback(void* callback);
-    void register_on_gizmo_scale_uniformly_callback(void* callback);
+//##############################################################################################################################################################
+    void register_on_gizmo_scale_callback(void* callback);
+//    void register_on_gizmo_scale_uniformly_callback(void* callback);
+//##############################################################################################################################################################
     void register_on_gizmo_rotate_callback(void* callback);
+//##############################################################################################################################################################
+    void register_on_gizmo_flatten_callback(void* callback);
+//##############################################################################################################################################################
     void register_on_update_geometry_info_callback(void* callback);
 
     void register_action_add_callback(void* callback);

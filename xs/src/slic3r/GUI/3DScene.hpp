@@ -254,12 +254,21 @@ public:
     GLVolume(const float *rgba) : GLVolume(rgba[0], rgba[1], rgba[2], rgba[3]) {}
 
 private:
+//##############################################################################################################################################################
     // Offset of the volume to be rendered.
-    Vec3d                 m_origin;
-    // Rotation around Z axis of the volume to be rendered.
-    float                 m_angle_z;
-    // Scale factor of the volume to be rendered.
-    float                 m_scale_factor;
+    Vec3f                 m_origin;
+    // Rotation around 3 axes of the volume to be rendered.
+    Vec3f                 m_angles;
+    // Scale factor along 3 axes of the volume to be rendered.
+    Vec3f                 m_scale_factors;
+
+//    // Offset of the volume to be rendered.
+//    Vec3d                 m_origin;
+//    // Rotation around Z axis of the volume to be rendered.
+//    float                 m_angle_z;
+//    // Scale factor of the volume to be rendered.
+//    float                 m_scale_factor;
+//##############################################################################################################################################################
     // World matrix of the volume to be rendered.
     mutable Transform3f   m_world_matrix;
     // Whether or not is needed to recalculate the world matrix.
@@ -327,11 +336,32 @@ public:
     // Sets render color in dependence of current state
     void set_render_color();
 
-    float get_angle_z();
-    const Vec3d& get_origin() const;
-    void set_origin(const Vec3d& origin);
-    void set_angle_z(float angle_z);
-    void set_scale_factor(float scale_factor);
+//##############################################################################################################################################################
+    Vec3d get_origin() const { return m_origin.cast<double>(); } // this method is needed for perl binding
+    void set_origin(const Vec3d& origin); // this method is needed for perl binding
+//    const Vec3f& get_origin() const { return m_origin; } // use this when perl is gone
+//    void set_origin(const Vec3f& origin); // use this when perl is gone
+
+//    float get_angle_x() const { return m_angles(0); }
+//    float get_angle_y() const { return m_angles(1); }
+//    float get_angle_z() const { return m_angles(2); }
+
+    void set_angle_x(float angle);
+    void set_angle_y(float angle);
+    void set_angle_z(float angle);
+    void set_angles(const Vec3f& angles);
+
+    void set_scale_x(float scale);
+    void set_scale_y(float scale);
+    void set_scale_z(float scale);
+    void set_scale(const Vec3f& scale);
+
+//    float get_angle_z();
+//    const Vec3d& get_origin() const;
+//    void set_origin(const Vec3d& origin);
+//    void set_angle_z(float angle_z);
+//    void set_scale_factor(float scale_factor);
+//##############################################################################################################################################################
     void set_convex_hull(const TriangleMesh& convex_hull);
 
     int                 object_idx() const { return this->composite_id / 1000000; }
@@ -388,6 +418,16 @@ public:
     }
 
     void reset_layer_height_texture_data() { layer_height_texture_data.reset(); }
+
+//##############################################################################################################################################################
+private:
+    void set_dirty()
+    {
+        m_world_matrix_dirty = true;
+        m_transformed_bounding_box_dirty = true;
+        m_transformed_convex_hull_bounding_box_dirty = true;
+    }
+//##############################################################################################################################################################
 };
 
 class GLVolumeCollection
@@ -545,8 +585,14 @@ public:
     static void register_on_instance_moved_callback(wxGLCanvas* canvas, void* callback);
     static void register_on_wipe_tower_moved_callback(wxGLCanvas* canvas, void* callback);
     static void register_on_enable_action_buttons_callback(wxGLCanvas* canvas, void* callback);
-    static void register_on_gizmo_scale_uniformly_callback(wxGLCanvas* canvas, void* callback);
+//##############################################################################################################################################################
+    static void register_on_gizmo_scale_callback(wxGLCanvas* canvas, void* callback);
+//    static void register_on_gizmo_scale_uniformly_callback(wxGLCanvas* canvas, void* callback);
+//##############################################################################################################################################################
     static void register_on_gizmo_rotate_callback(wxGLCanvas* canvas, void* callback);
+//##############################################################################################################################################################
+    static void register_on_gizmo_flatten_callback(wxGLCanvas* canvas, void* callback);
+//##############################################################################################################################################################
     static void register_on_update_geometry_info_callback(wxGLCanvas* canvas, void* callback);
 
     static void register_action_add_callback(wxGLCanvas* canvas, void* callback);

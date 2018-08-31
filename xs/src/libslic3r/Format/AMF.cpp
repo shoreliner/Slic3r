@@ -29,7 +29,11 @@
 // VERSION NUMBERS
 // 0 : .amf, .amf.xml and .zip.amf files saved by older slic3r. No version definition in them.
 // 1 : Introduction of amf versioning. No other change in data saved into amf files.
-const unsigned int VERSION_AMF = 1;
+//##############################################################################################################################################################
+// 2 : Instance's extended transformation data.
+const unsigned int VERSION_AMF = 2;
+//const unsigned int VERSION_AMF = 1;
+//##############################################################################################################################################################
 const char* SLIC3RPE_AMF_VERSION = "slic3rpe_amf_version";
 
 const char* SLIC3R_CONFIG_TYPE = "slic3rpe_config";
@@ -119,25 +123,69 @@ struct AMFParserContext
         NODE_TYPE_INSTANCE,             // amf/constellation/instance
         NODE_TYPE_DELTAX,               // amf/constellation/instance/deltax
         NODE_TYPE_DELTAY,               // amf/constellation/instance/deltay
+//##############################################################################################################################################################
+        NODE_TYPE_DELTAZ,               // amf/constellation/instance/deltaz
+        NODE_TYPE_RX,                   // amf/constellation/instance/rx
+        NODE_TYPE_RY,                   // amf/constellation/instance/ry
+//##############################################################################################################################################################
         NODE_TYPE_RZ,                   // amf/constellation/instance/rz
         NODE_TYPE_SCALE,                // amf/constellation/instance/scale
+//##############################################################################################################################################################
+        NODE_TYPE_SCALEX,               // amf/constellation/instance/scalex
+        NODE_TYPE_SCALEY,               // amf/constellation/instance/scaley
+        NODE_TYPE_SCALEZ,               // amf/constellation/instance/scalez
+//##############################################################################################################################################################
         NODE_TYPE_METADATA,             // anywhere under amf/*/metadata
     };
 
     struct Instance {
-        Instance() : deltax_set(false), deltay_set(false), rz_set(false), scale_set(false) {}
+//##############################################################################################################################################################
+        Instance() : deltax(0.0f), deltax_set(false), 
+                     deltay(0.0f), deltay_set(false),
+                     deltaz(0.0f), deltaz_set(false),
+                     rx(0.0f), rx_set(false),
+                     ry(0.0f), ry_set(false),
+                     rz(0.0f), rz_set(false),
+                     scale(1.0f), scale_set(false),
+                     scalex(1.0f), scalex_set(false),
+                     scaley(1.0f), scaley_set(false),
+                     scalez(1.0f), scalez_set(false) {}
+//        Instance() : deltax_set(false), deltay_set(false), rz_set(false), scale_set(false) {}
+//##############################################################################################################################################################
         // Shift in the X axis.
         float deltax;
         bool  deltax_set;
         // Shift in the Y axis.
         float deltay;
         bool  deltay_set;
+//##############################################################################################################################################################
+        // Shift in the Z axis.
+        float deltaz;
+        bool  deltaz_set;
+        // Rotation around the X axis.
+        float rx;
+        bool  rx_set;
+        // Rotation around the Y axis.
+        float ry;
+        bool  ry_set;
+//##############################################################################################################################################################
         // Rotation around the Z axis.
         float rz;
         bool  rz_set;
         // Scaling factor
         float scale;
         bool  scale_set;
+//##############################################################################################################################################################
+        // Scaling factor along X axis.
+        float scalex;
+        bool  scalex_set;
+        // Scaling factor along Y axis.
+        float scaley;
+        bool  scaley_set;
+        // Scaling factor along Z axis.
+        float scalez;
+        bool  scalez_set;
+//##############################################################################################################################################################
     };
 
     struct Object {
@@ -254,10 +302,26 @@ void AMFParserContext::startElement(const char *name, const char **atts)
                 node_type_new = NODE_TYPE_DELTAX; 
             else if (strcmp(name, "deltay") == 0)
                 node_type_new = NODE_TYPE_DELTAY;
+//##############################################################################################################################################################
+            else if (strcmp(name, "deltaz") == 0)
+                node_type_new = NODE_TYPE_DELTAZ;
+            else if (strcmp(name, "rx") == 0)
+                node_type_new = NODE_TYPE_RX;
+            else if (strcmp(name, "ry") == 0)
+                node_type_new = NODE_TYPE_RY;
+//##############################################################################################################################################################
             else if (strcmp(name, "rz") == 0)
                 node_type_new = NODE_TYPE_RZ;
             else if (strcmp(name, "scale") == 0)
                 node_type_new = NODE_TYPE_SCALE;
+//##############################################################################################################################################################
+            else if (strcmp(name, "scalex") == 0)
+                node_type_new = NODE_TYPE_SCALEX;
+            else if (strcmp(name, "scaley") == 0)
+                node_type_new = NODE_TYPE_SCALEY;
+            else if (strcmp(name, "scalez") == 0)
+                node_type_new = NODE_TYPE_SCALEZ;
+//##############################################################################################################################################################
         }
         break;
     case 4:
@@ -354,6 +418,26 @@ void AMFParserContext::endElement(const char * /* name */)
         m_instance->deltay_set = true;
         m_value[0].clear();
         break;
+//##############################################################################################################################################################
+    case NODE_TYPE_DELTAZ:
+        assert(m_instance);
+        m_instance->deltaz = float(atof(m_value[0].c_str()));
+        m_instance->deltaz_set = true;
+        m_value[0].clear();
+        break;
+    case NODE_TYPE_RX:
+        assert(m_instance);
+        m_instance->rx = float(atof(m_value[0].c_str()));
+        m_instance->rx_set = true;
+        m_value[0].clear();
+        break;
+    case NODE_TYPE_RY:
+        assert(m_instance);
+        m_instance->ry = float(atof(m_value[0].c_str()));
+        m_instance->ry_set = true;
+        m_value[0].clear();
+        break;
+//##############################################################################################################################################################
     case NODE_TYPE_RZ:
         assert(m_instance);
         m_instance->rz = float(atof(m_value[0].c_str()));
@@ -366,6 +450,26 @@ void AMFParserContext::endElement(const char * /* name */)
         m_instance->scale_set = true;
         m_value[0].clear();
         break;
+//##############################################################################################################################################################
+    case NODE_TYPE_SCALEX:
+        assert(m_instance);
+        m_instance->scalex = float(atof(m_value[0].c_str()));
+        m_instance->scalex_set = true;
+        m_value[0].clear();
+        break;
+    case NODE_TYPE_SCALEY:
+        assert(m_instance);
+        m_instance->scaley = float(atof(m_value[0].c_str()));
+        m_instance->scaley_set = true;
+        m_value[0].clear();
+        break;
+    case NODE_TYPE_SCALEZ:
+        assert(m_instance);
+        m_instance->scalez = float(atof(m_value[0].c_str()));
+        m_instance->scalez_set = true;
+        m_value[0].clear();
+        break;
+//##############################################################################################################################################################
 
     // Object vertices:
     case NODE_TYPE_VERTEX:
@@ -498,10 +602,19 @@ void AMFParserContext::endDocument()
         for (const Instance &instance : object.second.instances)
             if (instance.deltax_set && instance.deltay_set) {
                 ModelInstance *mi = m_model.objects[object.second.idx]->add_instance();
-                mi->offset(0) = instance.deltax;
-                mi->offset(1) = instance.deltay;
-                mi->rotation = instance.rz_set ? instance.rz : 0.f;
-                mi->scaling_factor = instance.scale_set ? instance.scale : 1.f;
+//##############################################################################################################################################################
+                mi->offset = Vec3d((double)instance.deltax, (double)instance.deltay, (double)instance.deltaz);
+                mi->rotation = Vec3d((double)instance.rx, (double)instance.ry, (double)instance.rz);
+                if (m_version > 1)
+                    mi->scaling_factor = Vec3d((double)instance.scalex, (double)instance.scaley, (double)instance.scalez);
+                else
+                    mi->scaling_factor = (double)instance.scale * Vec3d::Ones();
+
+//                mi->offset(0) = instance.deltax;
+//                mi->offset(1) = instance.deltay;
+//                mi->rotation = instance.rz_set ? instance.rz : 0.f;
+//                mi->scaling_factor = instance.scale_set ? instance.scale : 1.f;
+//##############################################################################################################################################################
             }
     }
 }
@@ -800,14 +913,33 @@ bool store_amf(const char *path, Model *model, Print* print, bool export_print_c
                     "    <instance objectid=\"" PRINTF_ZU "\">\n"
                     "      <deltax>%lf</deltax>\n"
                     "      <deltay>%lf</deltay>\n"
+//##############################################################################################################################################################
+                    "      <deltay>%lf</deltay>\n"
+                    "      <rx>%lf</rx>\n"
+                    "      <ry>%lf</ry>\n"
+//##############################################################################################################################################################
                     "      <rz>%lf</rz>\n"
-                    "      <scale>%lf</scale>\n"
+//##############################################################################################################################################################
+                    "      <scalex>%lf</scalex>\n"
+                    "      <scaley>%lf</scaley>\n"
+                    "      <scalez>%lf</scalez>\n"
+//                    "      <scale>%lf</scale>\n"
+//##############################################################################################################################################################
                     "    </instance>\n",
                     object_id,
                     instance->offset(0),
                     instance->offset(1),
-                    instance->rotation,
-                    instance->scaling_factor);
+//##############################################################################################################################################################
+                    instance->offset(2),
+                    instance->rotation(0),
+                    instance->rotation(1),
+                    instance->rotation(2),
+                    instance->scaling_factor(0),
+                    instance->scaling_factor(1),
+                    instance->scaling_factor(2));
+//                    instance->rotation,
+//                instance->scaling_factor);
+//##############################################################################################################################################################
                 //FIXME missing instance->scaling_factor
                 instances.append(buf);
             }
