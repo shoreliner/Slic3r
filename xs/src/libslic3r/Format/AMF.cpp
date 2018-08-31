@@ -312,8 +312,6 @@ void AMFParserContext::startElement(const char *name, const char **atts)
 //##############################################################################################################################################################
             else if (strcmp(name, "rz") == 0)
                 node_type_new = NODE_TYPE_RZ;
-            else if (strcmp(name, "scale") == 0)
-                node_type_new = NODE_TYPE_SCALE;
 //##############################################################################################################################################################
             else if (strcmp(name, "scalex") == 0)
                 node_type_new = NODE_TYPE_SCALEX;
@@ -322,6 +320,8 @@ void AMFParserContext::startElement(const char *name, const char **atts)
             else if (strcmp(name, "scalez") == 0)
                 node_type_new = NODE_TYPE_SCALEZ;
 //##############################################################################################################################################################
+            else if (strcmp(name, "scale") == 0)
+                node_type_new = NODE_TYPE_SCALE;
         }
         break;
     case 4:
@@ -378,7 +378,12 @@ void AMFParserContext::characters(const XML_Char *s, int len)
     {
         switch (m_path.size()) {
         case 4:
-            if (m_path.back() == NODE_TYPE_DELTAX || m_path.back() == NODE_TYPE_DELTAY || m_path.back() == NODE_TYPE_RZ || m_path.back() == NODE_TYPE_SCALE)
+//##############################################################################################################################################################
+            if (m_path.back() == NODE_TYPE_DELTAX || m_path.back() == NODE_TYPE_DELTAY || m_path.back() == NODE_TYPE_DELTAZ || 
+                m_path.back() == NODE_TYPE_RX || m_path.back() == NODE_TYPE_RY || m_path.back() == NODE_TYPE_RZ ||
+                m_path.back() == NODE_TYPE_SCALE || m_path.back() == NODE_TYPE_SCALEX || m_path.back() == NODE_TYPE_SCALEY || m_path.back() == NODE_TYPE_SCALEZ)
+//            if (m_path.back() == NODE_TYPE_DELTAX || m_path.back() == NODE_TYPE_DELTAY || m_path.back() == NODE_TYPE_RZ || m_path.back() == NODE_TYPE_SCALE)
+//##############################################################################################################################################################
                 m_value[0].append(s, len);
             break;
         case 6:
@@ -914,7 +919,7 @@ bool store_amf(const char *path, Model *model, Print* print, bool export_print_c
                     "      <deltax>%lf</deltax>\n"
                     "      <deltay>%lf</deltay>\n"
 //##############################################################################################################################################################
-                    "      <deltay>%lf</deltay>\n"
+                    "      <deltaz>%lf</deltaz>\n"
                     "      <rx>%lf</rx>\n"
                     "      <ry>%lf</ry>\n"
 //##############################################################################################################################################################
