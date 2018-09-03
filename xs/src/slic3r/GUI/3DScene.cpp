@@ -197,8 +197,8 @@ const float GLVolume::SELECTED_OUTSIDE_COLOR[4] = { 0.19f, 0.58f, 1.0f, 1.0f };
 GLVolume::GLVolume(float r, float g, float b, float a)
 //##############################################################################################################################################################
     : m_origin(Vec3f::Zero())
-    , m_angles(Vec3f::Zero())
-    , m_scale_factors(Vec3f::Ones())
+    , m_rotation(Vec3f::Zero())
+    , m_scaling_factor(Vec3f::Ones())
 
 //    : m_origin(0, 0, 0)
 //    , m_angle_z(0.0f)
@@ -284,74 +284,74 @@ void GLVolume::set_origin(const Vec3d& origin)
 //    }
 //}
 
-void GLVolume::set_angle_x(float angle)
+void GLVolume::set_rotation_x(float rotation)
 {
-    if (m_angles(0) != angle)
+    if (m_rotation(0) != rotation)
     {
-        m_angles(0) = angle;
+        m_rotation(0) = rotation;
         set_dirty();
     }
 }
 
-void GLVolume::set_angle_y(float angle)
+void GLVolume::set_rotation_y(float rotation)
 {
-    if (m_angles(1) != angle)
+    if (m_rotation(1) != rotation)
     {
-        m_angles(1) = angle;
+        m_rotation(1) = rotation;
         set_dirty();
     }
 }
 
-void GLVolume::set_angle_z(float angle)
+void GLVolume::set_rotation_z(float rotation)
 {
-    if (m_angles(2) != angle)
+    if (m_rotation(2) != rotation)
     {
-        m_angles(2) = angle;
+        m_rotation(2) = rotation;
         set_dirty();
     }
 }
 
-void GLVolume::set_angles(const Vec3f& angles)
+void GLVolume::set_rotation(const Vec3f& rotation)
 {
-    if (m_angles != angles)
+    if (m_rotation != rotation)
     {
-        m_angles = angles;
+        m_rotation = rotation;
         set_dirty();
     }
 }
 
 void GLVolume::set_scale_x(float scale)
 {
-    if (m_scale_factors(0) != scale)
+    if (m_scaling_factor(0) != scale)
     {
-        m_scale_factors(0) = scale;
+        m_scaling_factor(0) = scale;
         set_dirty();
     }
 }
 
 void GLVolume::set_scale_y(float scale)
 {
-    if (m_scale_factors(1) != scale)
+    if (m_scaling_factor(1) != scale)
     {
-        m_scale_factors(1) = scale;
+        m_scaling_factor(1) = scale;
         set_dirty();
     }
 }
 
 void GLVolume::set_scale_z(float scale)
 {
-    if (m_scale_factors(2) != scale)
+    if (m_scaling_factor(2) != scale)
     {
-        m_scale_factors(2) = scale;
+        m_scaling_factor(2) = scale;
         set_dirty();
     }
 }
 
 void GLVolume::set_scale(const Vec3f& scale)
 {
-    if (m_scale_factors != scale)
+    if (m_scaling_factor != scale)
     {
-        m_scale_factors = scale;
+        m_scaling_factor = scale;
         set_dirty();
     }
 }
@@ -412,10 +412,10 @@ const Transform3f& GLVolume::world_matrix() const
         m_world_matrix = Transform3f::Identity();
 //##############################################################################################################################################################
         m_world_matrix.translate(m_origin);
-        m_world_matrix.rotate(Eigen::AngleAxisf(m_angles(2), Vec3f::UnitZ()));
-        m_world_matrix.rotate(Eigen::AngleAxisf(m_angles(1), Vec3f::UnitY()));
-        m_world_matrix.rotate(Eigen::AngleAxisf(m_angles(0), Vec3f::UnitX()));
-        m_world_matrix.scale(m_scale_factors);
+        m_world_matrix.rotate(Eigen::AngleAxisf(m_rotation(2), Vec3f::UnitZ()));
+        m_world_matrix.rotate(Eigen::AngleAxisf(m_rotation(1), Vec3f::UnitY()));
+        m_world_matrix.rotate(Eigen::AngleAxisf(m_rotation(0), Vec3f::UnitX()));
+        m_world_matrix.scale(m_scaling_factor);
 //        m_world_matrix.translate(Vec3f((float)m_origin(0), (float)m_origin(1), (float)m_origin(2)));
 //        m_world_matrix.rotate(Eigen::AngleAxisf(m_angle_z, Vec3f::UnitZ()));
 //        m_world_matrix.scale(m_scale_factor);
@@ -499,10 +499,10 @@ void GLVolume::render() const
     ::glPushMatrix();
 //##############################################################################################################################################################
     ::glTranslatef((GLfloat)m_origin(0), (GLfloat)m_origin(1), (GLfloat)m_origin(2));
-    ::glRotatef(m_angles(2) * rad_to_deg, 0.0f, 0.0f, 1.0f);
-    ::glRotatef(m_angles(1) * rad_to_deg, 0.0f, 1.0f, 0.0f);
-    ::glRotatef(m_angles(0) * rad_to_deg, 1.0f, 0.0f, 0.0f);
-    ::glScalef(m_scale_factors(0), m_scale_factors(1), m_scale_factors(2));
+    ::glRotatef(m_rotation(2) * rad_to_deg, 0.0f, 0.0f, 1.0f);
+    ::glRotatef(m_rotation(1) * rad_to_deg, 0.0f, 1.0f, 0.0f);
+    ::glRotatef(m_rotation(0) * rad_to_deg, 1.0f, 0.0f, 0.0f);
+    ::glScalef(m_scaling_factor(0), m_scaling_factor(1), m_scaling_factor(2));
 //    ::glTranslated(m_origin(0), m_origin(1), m_origin(2));
 //    ::glRotatef(m_angle_z * 180.0f / PI, 0.0f, 0.0f, 1.0f);
 //    ::glScalef(m_scale_factor, m_scale_factor, m_scale_factor);
@@ -636,10 +636,10 @@ void GLVolume::render_VBOs(int color_id, int detection_id, int worldmatrix_id) c
     ::glPushMatrix();
 //##############################################################################################################################################################
     ::glTranslatef((GLfloat)m_origin(0), (GLfloat)m_origin(1), (GLfloat)m_origin(2));
-    ::glRotatef(m_angles(2) * rad_to_deg, 0.0f, 0.0f, 1.0f);
-    ::glRotatef(m_angles(1) * rad_to_deg, 0.0f, 1.0f, 0.0f);
-    ::glRotatef(m_angles(0) * rad_to_deg, 1.0f, 0.0f, 0.0f);
-    ::glScalef(m_scale_factors(0), m_scale_factors(1), m_scale_factors(2));
+    ::glRotatef(m_rotation(2) * rad_to_deg, 0.0f, 0.0f, 1.0f);
+    ::glRotatef(m_rotation(1) * rad_to_deg, 0.0f, 1.0f, 0.0f);
+    ::glRotatef(m_rotation(0) * rad_to_deg, 1.0f, 0.0f, 0.0f);
+    ::glScalef(m_scaling_factor(0), m_scaling_factor(1), m_scaling_factor(2));
 //    ::glTranslated(m_origin(0), m_origin(1), m_origin(2));
 //    ::glRotatef(m_angle_z * 180.0f / PI, 0.0f, 0.0f, 1.0f);
 //    ::glScalef(m_scale_factor, m_scale_factor, m_scale_factor);
@@ -692,10 +692,10 @@ void GLVolume::render_legacy() const
     ::glPushMatrix();
 //##############################################################################################################################################################
     ::glTranslatef((GLfloat)m_origin(0), (GLfloat)m_origin(1), (GLfloat)m_origin(2));
-    ::glRotatef(m_angles(2) * rad_to_deg, 0.0f, 0.0f, 1.0f);
-    ::glRotatef(m_angles(1) * rad_to_deg, 0.0f, 1.0f, 0.0f);
-    ::glRotatef(m_angles(0) * rad_to_deg, 1.0f, 0.0f, 0.0f);
-    ::glScalef(m_scale_factors(0), m_scale_factors(1), m_scale_factors(2));
+    ::glRotatef(m_rotation(2) * rad_to_deg, 0.0f, 0.0f, 1.0f);
+    ::glRotatef(m_rotation(1) * rad_to_deg, 0.0f, 1.0f, 0.0f);
+    ::glRotatef(m_rotation(0) * rad_to_deg, 1.0f, 0.0f, 0.0f);
+    ::glScalef(m_scaling_factor(0), m_scaling_factor(1), m_scaling_factor(2));
 //    ::glTranslated(m_origin(0), m_origin(1), m_origin(2));
 //    ::glRotatef(m_angle_z * 180.0f / PI, 0.0f, 0.0f, 1.0f);
 //    ::glScalef(m_scale_factor, m_scale_factor, m_scale_factor);
@@ -819,7 +819,7 @@ std::vector<int> GLVolumeCollection::load_object(
             v.shader_outside_printer_detection_enabled = !model_volume->modifier;
 //##############################################################################################################################################################
             v.set_origin(instance->offset);
-            v.set_angles(instance->rotation.cast<float>());
+            v.set_rotation(instance->rotation.cast<float>());
             v.set_scale(instance->scaling_factor.cast<float>());
 //            v.set_origin(Vec3d(instance->offset(0), instance->offset(1), 0.0));
 //            v.set_angle_z(instance->rotation);

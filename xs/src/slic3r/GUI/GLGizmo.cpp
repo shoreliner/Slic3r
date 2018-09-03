@@ -1228,7 +1228,7 @@ void GLGizmoFlatten::update_planes()
     }
 
 //##############################################################################################################################################################
-    const Transform3d& world_transform = m_model_object->instances.front()->world_matrix(true);
+    const Transform3d& world_transform = m_model_object->instances.front()->world_matrix(false, true, true);
 //##############################################################################################################################################################
 
     // Now we'll go through all the polygons, transform the points into xy plane to process them:

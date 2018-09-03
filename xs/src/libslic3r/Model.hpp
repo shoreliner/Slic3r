@@ -262,7 +262,7 @@ public:
     bool is_printable() const { return print_volume_state == PVS_Inside; }
 
 //##############################################################################################################################################################
-    Transform3d world_matrix(bool dont_translate) const;
+    Transform3d world_matrix(bool translate, bool rotate, bool scale) const;
 //##############################################################################################################################################################
 
 private:

@@ -258,9 +258,9 @@ private:
     // Offset of the volume to be rendered.
     Vec3f                 m_origin;
     // Rotation around 3 axes of the volume to be rendered.
-    Vec3f                 m_angles;
+    Vec3f                 m_rotation;
     // Scale factor along 3 axes of the volume to be rendered.
-    Vec3f                 m_scale_factors;
+    Vec3f                 m_scaling_factor;
 
 //    // Offset of the volume to be rendered.
 //    Vec3d                 m_origin;
@@ -346,10 +346,10 @@ public:
 //    float get_angle_y() const { return m_angles(1); }
 //    float get_angle_z() const { return m_angles(2); }
 
-    void set_angle_x(float angle);
-    void set_angle_y(float angle);
-    void set_angle_z(float angle);
-    void set_angles(const Vec3f& angles);
+    void set_rotation_x(float rotation);
+    void set_rotation_y(float rotation);
+    void set_rotation_z(float rotation);
+    void set_rotation(const Vec3f& rotation);
 
     void set_scale_x(float scale);
     void set_scale_y(float scale);

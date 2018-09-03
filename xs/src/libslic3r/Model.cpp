@@ -1049,7 +1049,7 @@ size_t ModelVolume::split(unsigned int max_extruders)
 //##############################################################################################################################################################
 void ModelInstance::transform_mesh(TriangleMesh& mesh, bool dont_translate) const
 {
-    mesh.transform(world_matrix(dont_translate).cast<float>());
+    mesh.transform(world_matrix(!dont_translate, true, true).cast<float>());
 }
 //void ModelInstance::transform_mesh(TriangleMesh* mesh, bool dont_translate) const
 //{
@@ -1063,13 +1063,8 @@ void ModelInstance::transform_mesh(TriangleMesh& mesh, bool dont_translate) cons
 //##############################################################################################################################################################
 BoundingBoxf3 ModelInstance::transform_mesh_bounding_box(const TriangleMesh& mesh, bool dont_translate) const
 {
-    Transform3f t = Transform3f::Identity();
-    t.rotate(Eigen::AngleAxisf((float)this->rotation(0), Vec3f::UnitX()));
-    t.rotate(Eigen::AngleAxisf((float)this->rotation(1), Vec3f::UnitY()));
-    t.rotate(Eigen::AngleAxisf((float)this->rotation(2), Vec3f::UnitZ()));
-
     TriangleMesh copy(mesh);
-    copy.transform(t);
+    copy.transform(world_matrix(false, true, false).cast<float>());
 
     BoundingBoxf3 bb = copy.bounding_box();
     if (!empty(bb))
@@ -1124,7 +1119,7 @@ BoundingBoxf3 ModelInstance::transform_mesh_bounding_box(const TriangleMesh& mes
 BoundingBoxf3 ModelInstance::transform_bounding_box(const BoundingBoxf3 &bbox, bool dont_translate) const
 {
 //##############################################################################################################################################################
-    return bbox.transformed(world_matrix(dont_translate));
+    return bbox.transformed(world_matrix(!dont_translate, true, true));
 
 //    Transform3d matrix = Transform3d::Identity();
 //    if (!dont_translate)
@@ -1150,23 +1145,27 @@ void ModelInstance::transform_polygon(Polygon* polygon) const
 //##############################################################################################################################################################
 Vec3d ModelInstance::transform_vector(const Vec3d& v, bool dont_translate) const
 {
-    return world_matrix(dont_translate) * v;
+    return world_matrix(!dont_translate, true, true) * v;
 }
 //##############################################################################################################################################################
 
 //##############################################################################################################################################################
-Transform3d ModelInstance::world_matrix(bool dont_translate) const
+Transform3d ModelInstance::world_matrix(bool translate, bool rotate, bool scale) const
 {
     Transform3d m = Transform3d::Identity();
 
-    if (!dont_translate)
+    if (translate)
         m.translate(offset);
 
-    m.rotate(Eigen::AngleAxisd(rotation(2), Vec3d::UnitZ()));
-    m.rotate(Eigen::AngleAxisd(rotation(1), Vec3d::UnitY()));
-    m.rotate(Eigen::AngleAxisd(rotation(0), Vec3d::UnitX()));
+    if (rotate)
+    {
+        m.rotate(Eigen::AngleAxisd(rotation(2), Vec3d::UnitZ()));
+        m.rotate(Eigen::AngleAxisd(rotation(1), Vec3d::UnitY()));
+        m.rotate(Eigen::AngleAxisd(rotation(0), Vec3d::UnitX()));
+    }
 
-    m.scale(scaling_factor);
+    if (scale)
+        m.scale(scaling_factor);
 
     return m;
 }

@@ -1766,7 +1766,7 @@ namespace Slic3r {
             }
 
 //##############################################################################################################################################################
-            build_items.emplace_back(instance_id, instance->world_matrix(false));
+            build_items.emplace_back(instance_id, instance->world_matrix(true, true, true));
 
 //            Transform3d t = Transform3d::Identity();
 //            t.translate(Vec3d(instance->offset(0), instance->offset(1), 0.0));
