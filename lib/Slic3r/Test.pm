@@ -151,6 +151,12 @@ sub model {
     my $input_file = "${model_name}.stl";
     my $mesh = mesh($model_name, %params);
 #    $mesh->write_ascii("out/$input_file");
+
+#=====================================================================================================================================        
+    my $scale = $params{scale} // 1;
+    my $rotation = $params{rotation} // 0;
+#=====================================================================================================================================        
+
     
     my $model = Slic3r::Model->new;
     my $object = $model->add_object(input_file => $input_file);
@@ -159,8 +165,8 @@ sub model {
     $object->add_instance(
 #=====================================================================================================================================        
         offset          => Slic3r::Pointf3->new(0,0,0),
-        rotation        => Slic3r::Pointf3->new(0,0, $params{rotation} // 0),
-        scaling_factor  => Slic3r::Pointf3->new($params{scale} // 1, $params{scale} // 1, $params{scale} // 1),
+        rotation        => Slic3r::Pointf3->new(0,0, $rotation),
+        scaling_factor  => Slic3r::Pointf3->new($scale, $scale, $scale),
 #        offset          => Slic3r::Pointf->new(0,0),
 #        rotation        => $params{rotation} // 0,
 #        scaling_factor  => $params{scale} // 1,
