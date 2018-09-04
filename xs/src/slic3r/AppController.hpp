@@ -168,6 +168,7 @@ protected:
  */
 class PrintController: public AppControllerBoilerplate {
     Print *print_ = nullptr;
+    std::function<void()> rempools_;
 protected:
 
     void make_skirt();
@@ -228,6 +229,8 @@ public:
      * @brief Slice the print into zipped png files.
      */
     void slice_to_png();
+
+    void add_sla_pool();
 
     const PrintConfig& config() const;
 };
