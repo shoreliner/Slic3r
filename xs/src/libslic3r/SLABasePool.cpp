@@ -45,13 +45,23 @@ template<> struct coordinate_system<Slic3r::Point> {
 
 template<> struct dimension<Slic3r::Point>: boost::mpl::int_<2> {};
 
-template<int d> struct access<Slic3r::Point, d > {
+template<> struct access<Slic3r::Point, 0 > {
     static inline coord_t get(Slic3r::Point const& a) {
-        return a(d);
+        return a(0);
     }
 
     static inline void set(Slic3r::Point& a, coord_t const& value) {
-        a(d) = value;
+        a(0) = value;
+    }
+};
+
+template<> struct access<Slic3r::Point, 1 > {
+    static inline coord_t get(Slic3r::Point const& a) {
+        return a(1);
+    }
+
+    static inline void set(Slic3r::Point& a, coord_t const& value) {
+        a(1) = value;
     }
 };
 
@@ -67,17 +77,38 @@ template<> struct point_type<Box> {
     using type = Slic3r::Point;
 };
 
-template<int d> struct indexed_access<Box, min_corner, d> {
-    static inline coord_t get(Box const& box) { return box.min(d); }
+//template<int d> struct indexed_access<Box, min_corner, d> {
+//    static inline coord_t get(Box const& box) { return box.min(d); }
+//    static inline void set(Box &box, coord_t const& coord) {
+//        box.min(d) = coord;
+//    }
+//};
+
+template<> struct indexed_access<Box, min_corner, 0> {
+    static inline coord_t get(Box const& box) { return box.min(0); }
     static inline void set(Box &box, coord_t const& coord) {
-        box.min(d) = coord;
+        box.min(0) = coord;
     }
 };
 
-template<int d> struct indexed_access<Box, max_corner, d> {
-    static inline coord_t get(Box const& box) { return box.max(d); }
+template<> struct indexed_access<Box, min_corner, 1> {
+    static inline coord_t get(Box const& box) { return box.min(1); }
     static inline void set(Box &box, coord_t const& coord) {
-        box.max(d) = coord;
+        box.min(1) = coord;
+    }
+};
+
+template<> struct indexed_access<Box, max_corner, 0> {
+    static inline coord_t get(Box const& box) { return box.max(0); }
+    static inline void set(Box &box, coord_t const& coord) {
+        box.max(0) = coord;
+    }
+};
+
+template<> struct indexed_access<Box, max_corner, 1> {
+    static inline coord_t get(Box const& box) { return box.max(1); }
+    static inline void set(Box &box, coord_t const& coord) {
+        box.max(1) = coord;
     }
 };
 
